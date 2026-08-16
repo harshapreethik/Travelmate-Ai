@@ -2,6 +2,21 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     // -------------------------------------------------------------------
+    // 0. CLICKABLE SUGGESTION PILLS
+    // -------------------------------------------------------------------
+    const chatInput = document.getElementById("chatInput");
+    const chatForm = document.getElementById("chatForm");
+
+    document.querySelectorAll(".suggestion-pill[data-prompt]").forEach(pill => {
+        pill.addEventListener("click", () => {
+            if (chatInput && chatForm) {
+                chatInput.value = pill.getAttribute("data-prompt");
+                chatForm.dispatchEvent(new Event("submit"));
+            }
+        });
+    });
+
+    // -------------------------------------------------------------------
     // MARKDOWN FORMATTER (Clean hierarchy, No raw # markers)
     // -------------------------------------------------------------------
     function formatMarkdown(text) {
@@ -46,10 +61,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 1. CHAT ASSISTANT HANDLER (Auto Language Detection)
+    // 1. CHAT ASSISTANT HANDLER (Universal Auto Language & Script)
     // -------------------------------------------------------------------
-    const chatForm = document.getElementById("chatForm");
-    const chatInput = document.getElementById("chatInput");
     const chatWindow = document.getElementById("chatWindow");
 
     if (chatForm && chatInput && chatWindow) {
@@ -62,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
             chatInput.value = "";
 
             const loadingBubble = appendChatBubble("Thinking...", "bot");
-            loadingBubble.innerHTML = '<span class="spinner-grow spinner-grow-sm me-2 text-primary" role="status"></span>Typing...';
+            loadingBubble.innerHTML = '<span class="spinner-grow spinner-grow-sm me-2 text-primary" role="status"></span>Thinking...';
 
             try {
                 const res = await fetch("/api/chat", {
@@ -78,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     loadingBubble.textContent = "Error: " + (data.message || "Failed to respond.");
                 }
             } catch (err) {
-                loadingBubble.textContent = "Connection error. Please try again.";
+                loadingBubble.textContent = "Connection error. Please check server logs.";
             }
         });
     }
@@ -93,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 2. RECOMMENDATION ENGINE HANDLER (App-Style Product Directory)
+    // 2. RECOMMENDATION ENGINE HANDLER (Product Directory Style)
     // -------------------------------------------------------------------
     const recForm = document.getElementById("recommendationForm");
     const recOutput = document.getElementById("recommendationsOutput");
@@ -143,14 +156,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     recs.forEach(item => {
                         const mapQuery = encodeURIComponent(`${item.name}, ${destination}`);
                         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
-                        const rating = item.rating || 4.7;
+                        const rating = item.rating || 4.8;
                         const reviews = item.reviews_count || "5.2k";
 
                         outputHtml += `
                             <div class="col-md-6">
                                 <div class="card h-100 p-3 shadow-sm border-0 rounded-3 d-flex flex-column justify-content-between">
                                     <div>
-                                        <!-- Header: Name & Match Badge -->
                                         <div class="d-flex justify-content-between align-items-start mb-1">
                                             <h6 class="fw-bold text-dark m-0 fs-6">${item.name}</h6>
                                             <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 small">
@@ -158,7 +170,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                             </span>
                                         </div>
 
-                                        <!-- Rating & Category Subtitle -->
                                         <div class="d-flex align-items-center gap-2 mb-2 text-muted small">
                                             <span class="text-warning fw-bold"><i class="bi bi-star-fill me-1"></i>${rating}</span>
                                             <span class="text-muted">(${reviews})</span>
@@ -166,26 +177,23 @@ document.addEventListener("DOMContentLoaded", () => {
                                             <span class="badge bg-light text-secondary border">${item.category}</span>
                                         </div>
 
-                                        <!-- Highlight -->
-                                        <p class="text-dark small mb-3">${item.highlight}</p>
+                                        <p class="text-dark small mb-3">${item.highlight || ''}</p>
 
-                                        <!-- Specs Grid -->
                                         <div class="row g-2 mb-3">
                                             <div class="col-6">
                                                 <div class="p-2 bg-light rounded text-center small">
                                                     <span class="text-muted d-block" style="font-size: 0.75rem;">ESTIMATED COST</span>
-                                                    <strong class="text-primary">${item.approx_cost}</strong>
+                                                    <strong class="text-primary">${item.approx_cost || 'Free Entry'}</strong>
                                                 </div>
                                             </div>
                                             <div class="col-6">
                                                 <div class="p-2 bg-light rounded text-center small">
                                                     <span class="text-muted d-block" style="font-size: 0.75rem;">IDEAL DURATION</span>
-                                                    <strong class="text-dark">${item.duration}</strong>
+                                                    <strong class="text-dark">${item.duration || '2 hrs'}</strong>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <!-- Local Tip Chip -->
                                         ${item.local_tip ? `
                                             <div class="p-2 rounded bg-light border-start border-3 border-warning small text-secondary mb-3">
                                                 <strong class="text-dark"><i class="bi bi-shield-check text-warning me-1"></i>Tip:</strong> ${item.local_tip}
@@ -193,7 +201,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                         ` : ''}
                                     </div>
 
-                                    <!-- Action Button -->
                                     <div class="pt-2 border-top">
                                         <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-100 fw-semibold">
                                             <i class="bi bi-geo-alt-fill me-1"></i>Directions & Maps
@@ -210,27 +217,73 @@ document.addEventListener("DOMContentLoaded", () => {
                     recOutput.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
                 }
             } catch (err) {
-                recOutput.innerHTML = '<div class="alert alert-danger">Failed to load spot recommendations.</div>';
+                recOutput.innerHTML = '<div class="alert alert-danger">Failed to load recommendations.</div>';
             }
         });
     }
 
     // -------------------------------------------------------------------
-    // 3. ITINERARY BUILDER HANDLER
+    // 3. ITINERARY BUILDER & INTERACTIVE BUDGET SLIDER
     // -------------------------------------------------------------------
+    const budgetSlider = document.getElementById("itinBudgetSlider");
+    const budgetInput = document.getElementById("itinBudgetInput");
+    const budgetDisplay = document.getElementById("budgetDisplay");
     const itinForm = document.getElementById("itineraryForm");
     const itinOutput = document.getElementById("itineraryOutput");
+
+    function updateBudgetTier(val) {
+        let num = parseInt(val) || 0;
+        let tier = "Budget";
+        let badgeClass = "bg-success-subtle text-success border border-success-subtle";
+
+        if (num > 15000) {
+            tier = "Luxury";
+            badgeClass = "bg-danger-subtle text-danger border border-danger-subtle";
+        } else if (num >= 4000) {
+            tier = "Comfort";
+            badgeClass = "bg-primary-subtle text-primary border border-primary-subtle";
+        }
+
+        if (budgetDisplay) {
+            budgetDisplay.className = `small fw-semibold text-dark`;
+            budgetDisplay.textContent = `₹${num.toLocaleString("en-IN")} (${tier})`;
+        }
+    }
+
+    if (budgetSlider && budgetInput) {
+        budgetSlider.addEventListener("input", (e) => {
+            budgetInput.value = e.target.value;
+            updateBudgetTier(e.target.value);
+        });
+
+        budgetInput.addEventListener("input", (e) => {
+            budgetSlider.value = e.target.value;
+            updateBudgetTier(e.target.value);
+        });
+
+        updateBudgetTier(budgetSlider.value);
+    }
 
     if (itinForm && itinOutput) {
         itinForm.addEventListener("submit", async (e) => {
             e.preventDefault();
-            itinOutput.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            itinOutput.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted fw-semibold">Building optimized day-by-day travel plan...</p>
+                </div>
+            `;
+
+            const destination = document.getElementById("itinDestination").value.trim();
+            const numDays = parseInt(document.getElementById("itinDays").value);
+            const budgetAmount = budgetInput ? `₹${budgetInput.value}` : "₹5,000";
+            const travellerType = document.getElementById("itinStyle").value;
 
             const payload = {
-                destination: document.getElementById("itinDestination").value,
-                num_days: parseInt(document.getElementById("itinDays").value),
-                budget_level: document.getElementById("itinBudget").value,
-                traveller_type: document.getElementById("itinStyle").value
+                destination: destination,
+                num_days: numDays,
+                budget_level: budgetAmount,
+                traveller_type: travellerType
             };
 
             try {
@@ -242,17 +295,82 @@ document.addEventListener("DOMContentLoaded", () => {
                 const data = await res.json();
 
                 if (data.status === "success") {
-                    itinOutput.innerHTML = `
-                        <div class="card feature-card p-4 shadow-sm border-0">
-                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-map me-2"></i>${data.data.num_days}-Day Itinerary for ${data.data.destination}</h6>
-                            <div>${formatMarkdown(data.data.itinerary)}</div>
+                    const plan = data.data;
+                    const days = plan.days || [];
+
+                    let outputHtml = `
+                        <div class="card p-3 mb-4 border-0 shadow-sm bg-dark text-white rounded-3">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div>
+                                    <h5 class="fw-bold m-0"><i class="bi bi-geo-alt-fill text-primary me-2"></i>${plan.num_days}-Day Trip to ${plan.destination}</h5>
+                                    <small class="text-white-50">${plan.budget_level} Budget • ${travellerType}</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-primary px-3 py-2 fs-6"><i class="bi bi-wallet2 me-1"></i>${plan.estimated_daily_budget || 'Budget Planned'}</span>
+                                </div>
+                            </div>
+                            ${plan.transit_summary ? `
+                                <div class="mt-2 pt-2 border-top border-secondary small text-white-50">
+                                    <i class="bi bi-compass me-1 text-primary"></i><strong>Transit Advice:</strong> ${plan.transit_summary}
+                                </div>
+                            ` : ''}
                         </div>
                     `;
+
+                    days.forEach(d => {
+                        outputHtml += `
+                            <div class="card p-4 mb-4 shadow-sm border-0 rounded-3">
+                                <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
+                                    <h6 class="fw-bold text-primary m-0 fs-5">
+                                        <i class="bi bi-calendar-event me-2"></i>Day ${d.day_number}: ${d.theme}
+                                    </h6>
+                                    <span class="badge bg-light text-secondary border">Full Day Route</span>
+                                </div>
+
+                                <div class="timeline ps-2">
+                                    <div class="mb-3 ps-3 border-start border-3 border-warning position-relative">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <strong class="text-dark"><i class="bi bi-sunrise-fill text-warning me-2"></i>Morning</strong>
+                                            <span class="badge bg-light text-secondary border small">${d.morning.duration || '3 hrs'}</span>
+                                        </div>
+                                        <div class="fw-semibold text-primary small">${d.morning.activity}</div>
+                                        <p class="text-muted small m-0">${d.morning.description}</p>
+                                    </div>
+
+                                    <div class="mb-3 ps-3 border-start border-3 border-primary position-relative">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <strong class="text-dark"><i class="bi bi-sun-fill text-primary me-2"></i>Afternoon & Lunch</strong>
+                                            <span class="badge bg-light text-secondary border small">${d.afternoon.duration || '2.5 hrs'}</span>
+                                        </div>
+                                        <div class="fw-semibold text-primary small">${d.afternoon.activity}</div>
+                                        <p class="text-muted small m-0">${d.afternoon.description}</p>
+                                    </div>
+
+                                    <div class="mb-3 ps-3 border-start border-3 border-info position-relative">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <strong class="text-dark"><i class="bi bi-moon-stars-fill text-info me-2"></i>Evening & Night</strong>
+                                            <span class="badge bg-light text-secondary border small">${d.evening.duration || '3 hrs'}</span>
+                                        </div>
+                                        <div class="fw-semibold text-primary small">${d.evening.activity}</div>
+                                        <p class="text-muted small m-0">${d.evening.description}</p>
+                                    </div>
+                                </div>
+
+                                ${d.pro_tip ? `
+                                    <div class="mt-2 p-2 bg-light rounded border-start border-warning border-3 small">
+                                        <strong class="text-dark"><i class="bi bi-lightbulb-fill text-warning me-1"></i>Day ${d.day_number} Tip:</strong> ${d.pro_tip}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    });
+
+                    itinOutput.innerHTML = outputHtml;
                 } else {
                     itinOutput.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
                 }
             } catch (err) {
-                itinOutput.innerHTML = '<div class="alert alert-danger">Error generating itinerary.</div>';
+                itinOutput.innerHTML = '<div class="alert alert-danger">Error generating itinerary. Please try again.</div>';
             }
         });
     }
@@ -302,7 +420,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (data.status === "success") {
                     visionOutput.innerHTML = `
-                        <div class="card feature-card p-4 shadow-sm border-0">
+                        <div class="card feature-card p-4 shadow-sm border-0 rounded-3">
                             <h6 class="fw-bold text-primary mb-3"><i class="bi bi-eye me-2"></i>Vision Analysis Result</h6>
                             <div>${formatMarkdown(data.analysis)}</div>
                         </div>
@@ -317,7 +435,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 5. TRANSLATOR HANDLER (Auto-Detect)
+    // 5. TRANSLATOR HANDLER (Auto-Detect, Chips, Speech & TTS)
     // -------------------------------------------------------------------
     const transForm = document.getElementById("translateForm");
     const transText = document.getElementById("transText");
@@ -377,7 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const rawText = data.data.translation_data || "";
                     
                     transOutput.innerHTML = `
-                        <div class="card feature-card p-4 shadow-sm border-0">
+                        <div class="card feature-card p-4 shadow-sm border-0 rounded-3">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="fw-bold text-primary m-0"><i class="bi bi-check2-circle me-1"></i>Translation Result</h6>
                                 <button class="btn btn-sm btn-outline-primary" id="playAudioBtn">
@@ -405,7 +523,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 6. EMERGENCY DIRECTORY
+    // 6. EMERGENCY DIRECTORY (Zero-Latency Local Caching)
     // -------------------------------------------------------------------
     const emCountrySelect = document.getElementById("emCountrySelect");
     const emStateSelect = document.getElementById("emStateSelect");
