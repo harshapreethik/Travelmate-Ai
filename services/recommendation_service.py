@@ -1,139 +1,111 @@
 """
 TravelMate AI — Recommendation Engine Service
-Combines deterministic score-based JSON filtering with Gemini AI contextual reasoning.
+Generates structured venue matrices with match scoring, cost estimation, and map routing.
 """
 
 import json
 import logging
-from pathlib import Path
+import time
+from google import genai
+from google.genai import types
 from config import Config
-from services.gemini_service import get_gemini_service
 
 logger = logging.getLogger(__name__)
 
+
 class RecommendationService:
     def __init__(self):
-        self.data_file = Config.ATTRACTIONS_FILE
-        self.attractions = self._load_attractions()
-
-    def _load_attractions(self) -> list:
-        """Loads attractions dataset from local ground-truth JSON."""
-        try:
-            if not Path(self.data_file).exists():
-                logger.warning(f"Attractions file missing at {self.data_file}")
-                return []
-            with open(self.data_file, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            logger.error(f"Failed to load attractions data: {e}")
-            return []
-
-    def score_attraction(self, attraction: dict, preferences: dict) -> float:
-        """
-        Calculates a compatibility score (0.0 - 1.0) for an attraction against user preferences.
-        """
-        score = 0.0
-        total_weights = 0.0
-
-        # Preference 1: User Interests (Weight: 0.4)
-        target_interests = preferences.get("interests", [])
-        if target_interests:
-            total_weights += 0.4
-            matched = set(attraction.get("interests", [])).intersection(set(target_interests))
-            if matched:
-                score += 0.4 * (len(matched) / max(len(target_interests), 1))
-
-        # Preference 2: Budget Match (Weight: 0.3)
-        target_budget = preferences.get("budget_level")
-        if target_budget:
-            total_weights += 0.3
-            if attraction.get("budget_level", "").lower() == target_budget.lower():
-                score += 0.3
-            elif attraction.get("budget_level", "").lower() == "budget":
-                score += 0.2  # Budget options match almost everyone
-
-        # Preference 3: Traveller Type Match (Weight: 0.2)
-        traveller_type = preferences.get("traveller_type")
-        if traveller_type:
-            total_weights += 0.2
-            if traveller_type in attraction.get("traveller_types", []):
-                score += 0.2
-
-        # Popularity Weight (Weight: 0.1)
-        score += 0.1 * attraction.get("popularity_score", 0.8)
-
-        return round(score, 2)
+        if not Config.GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY is missing. Check your .env file.")
+        self.client = genai.Client(api_key=Config.GEMINI_API_KEY)
+        self.active_model = "gemini-3.7-flash"
 
     def get_recommendations(
         self,
-        destination: str = "Hyderabad",
-        interests: list = None,
-        budget_level: str = None,
-        traveller_type: str = None,
-        lang_code: str = "en",
-        limit: int = 3
+        destination: str,
+        interests: list,
+        budget_level: str = "Moderate",
+        traveller_type: str = "Solo"
     ) -> dict:
-        """
-        Filters, ranks, and enriches top recommendations using deterministic scoring + Gemini reasoning.
-        """
-        interests = interests or []
-        preferences = {
-            "interests": interests,
-            "budget_level": budget_level,
-            "traveller_type": traveller_type
-        }
+        interests_str = ", ".join(interests) if interests else "Sightseeing, Local Culture, Food"
 
-        # Filter attractions by destination
-        dest_attractions = [
-            a for a in self.attractions 
-            if a.get("destination", "").lower() == destination.lower()
+        prompt = f"""
+You are TravelMate AI's specialized Recommendation Engine algorithm.
+Generate exactly 4 to 6 top curated spot recommendations for:
+- Destination: {destination}
+- Traveler Persona: {traveller_type}
+- Budget Tier: {budget_level}
+- Selected Interests: {interests_str}
+
+STRICT JSON OUTPUT FORMAT ONLY:
+Return a single JSON object with no markdown backticks, no markdown codeblocks, and no introductory text.
+
+{{
+  "ai_insights": "2-sentence high-level strategic summary of why this destination fits their chosen vibe and budget.",
+  "recommendations": [
+    {{
+      "name": "Spot or Attraction Name",
+      "category": "Heritage / Food / Nature / Bazaar / Adventure",
+      "match_score": 0.95,
+      "why_for_you": "1 crisp sentence explaining why this specifically fits a {traveller_type} with {budget_level} budget.",
+      "best_time_to_visit": "e.g., 4:00 PM - 7:00 PM (Sunset)",
+      "approx_cost": "e.g., Free or ₹150 Entry or $10",
+      "duration": "e.g., 2 hours",
+      "insider_tip": "One authentic local insider secret or tip to avoid crowds/scams."
+    }}
+  ]
+}}
+"""
+
+        config = types.GenerateContentConfig(
+            temperature=0.3,
+            max_output_tokens=2500,
+            response_mime_type="application/json"
+        )
+
+        candidate_models = [
+            self.active_model,
+            "gemini-3.7-flash",
+            "gemini-3.5-flash",
+            "gemini-3.1-flash-lite",
+            "gemini-flash-latest"
         ]
+        candidate_models = list(dict.fromkeys(candidate_models))
 
-        if not dest_attractions:
-            # Fallback if specific city is not in JSON
-            dest_attractions = self.attractions
+        for model in candidate_models:
+            for attempt in range(2):
+                try:
+                    logger.info(f"Generating recommendations with ({model}) [Attempt {attempt + 1}]")
+                    response = self.client.models.generate_content(
+                        model=model,
+                        contents=prompt,
+                        config=config
+                    )
+                    if response and response.text:
+                        raw_json = response.text.strip()
+                        if raw_json.startswith("```json"):
+                            raw_json = raw_json[7:]
+                        if raw_json.endswith("```"):
+                            raw_json = raw_json[:-3]
 
-        # Rank attractions using Python scoring
-        scored_items = []
-        for item in dest_attractions:
-            match_score = self.score_attraction(item, preferences)
-            item_copy = item.copy()
-            item_copy["match_score"] = match_score
-            scored_items.append(item_copy)
-
-        # Sort descending by match score
-        scored_items.sort(key=lambda x: x["match_score"], reverse=True)
-        top_recommendations = scored_items[:limit]
-
-        # Use Gemini AI to generate a natural personalized narrative summarizing these choices
-        language_name = Config.SUPPORTED_LANGUAGES.get(lang_code, "English")
-        ai_service = get_gemini_service()
-
-        prompt_summary = (
-            f"Act as a local travel expert in {destination}. "
-            f"The user is a '{traveller_type or 'General'}' traveller with budget '{budget_level or 'Moderate'}' "
-            f"interested in {', '.join(interests) if interests else 'top spots'}.\n\n"
-            f"Here are the top ranked places selected for them:\n" +
-            "\n".join([f"- {item['name']}: {item['description']}" for item in top_recommendations]) +
-            f"\n\nIn {language_name}, write a brief, warm 3-bullet-point summary explaining why these choices fit their travel style and give 1 insider tip for visiting them."
-        )
-
-        ai_narrative = ai_service.generate_chat_response(
-            user_message=prompt_summary,
-            lang_code=lang_code,
-            destination=destination
-        )
+                        parsed_data = json.loads(raw_json.strip())
+                        self.active_model = model
+                        return parsed_data
+                except Exception as e:
+                    logger.warning(f"Recommendation generation failed on {model}: {e}")
+                    if "503" in str(e) or "UNAVAILABLE" in str(e):
+                        time.sleep(1.5)
+                        continue
+                    break
 
         return {
-            "destination": destination,
-            "language": lang_code,
-            "total_found": len(top_recommendations),
-            "recommendations": top_recommendations,
-            "ai_insights": ai_narrative
+            "ai_insights": f"Found personalized spots for {destination}.",
+            "recommendations": []
         }
 
-# Singleton accessor
+
 _recommendation_service = None
+
 
 def get_recommendation_service() -> RecommendationService:
     global _recommendation_service

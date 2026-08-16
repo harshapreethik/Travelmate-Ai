@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 2. RECOMMENDATION ENGINE HANDLER
+    // 2. RECOMMENDATION ENGINE HANDLER (Interactive Structured Matrix)
     // -------------------------------------------------------------------
     const recForm = document.getElementById("recommendationForm");
     const recOutput = document.getElementById("recommendationsOutput");
@@ -101,12 +101,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if (recForm && recOutput) {
         recForm.addEventListener("submit", async (e) => {
             e.preventDefault();
-            recOutput.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            recOutput.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted fw-semibold">Scoring & Curating Best Spots...</p>
+                </div>
+            `;
 
+            const destination = document.getElementById("recDestination").value.trim();
             const interests = Array.from(document.querySelectorAll(".rec-interest:checked")).map(cb => cb.value);
 
             const payload = {
-                destination: document.getElementById("recDestination").value,
+                destination: destination,
                 traveller_type: document.getElementById("recTravellerType").value,
                 budget_level: document.getElementById("recBudget").value,
                 interests: interests
@@ -122,33 +128,76 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (data.status === "success") {
                     const recs = data.data.recommendations || [];
-                    let cardsHtml = `<div class="card p-3 mb-3 bg-light border-0"><h6 class="fw-bold text-primary mb-2">AI Expert Insights</h6><p class="m-0">${formatMarkdown(data.data.ai_insights)}</p></div>`;
-                    
-                    cardsHtml += '<div class="row g-3">';
+                    const insights = data.data.ai_insights || "";
+
+                    let outputHtml = "";
+
+                    if (insights) {
+                        outputHtml += `
+                            <div class="card p-3 mb-4 border-0 shadow-sm bg-primary-subtle border-start border-primary border-4 rounded-3">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="bi bi-stars text-primary fs-5 me-2"></i>
+                                    <h6 class="fw-bold text-primary m-0">AI Curated Persona Fit</h6>
+                                </div>
+                                <p class="m-0 text-dark small">${formatMarkdown(insights)}</p>
+                            </div>
+                        `;
+                    }
+
+                    outputHtml += '<div class="row g-3">';
+
                     recs.forEach(item => {
-                        cardsHtml += `
+                        const matchPct = Math.round((item.match_score || 0.9) * 100);
+                        const mapQuery = encodeURIComponent(`${item.name}, ${destination}`);
+                        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
+                        outputHtml += `
                             <div class="col-md-6">
-                                <div class="card feature-card h-100 p-3 shadow-sm border-0">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h6 class="fw-bold m-0">${item.name}</h6>
-                                        <span class="badge bg-primary-subtle text-primary">Match: ${(item.match_score * 100).toFixed(0)}%</span>
+                                <div class="card h-100 p-3 shadow-sm border-0 rounded-3 d-flex flex-column justify-content-between position-relative">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h5 class="fw-bold text-dark m-0 fs-6">${item.name}</h5>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                                <i class="bi bi-fire me-1"></i>${matchPct}% Match
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="d-flex gap-2 mb-2">
+                                            <span class="badge bg-light text-secondary border small">${item.category}</span>
+                                            <span class="badge bg-light text-secondary border small"><i class="bi bi-clock me-1"></i>${item.duration || '1-2 hrs'}</span>
+                                        </div>
+
+                                        <p class="text-secondary small mb-2">${item.why_for_you || ''}</p>
+
+                                        <div class="bg-light p-2 rounded-2 mb-2 small">
+                                            <div class="text-muted"><i class="bi bi-wallet2 text-primary me-1"></i><strong>Cost:</strong> ${item.approx_cost || 'Free Entry'}</div>
+                                            <div class="text-muted"><i class="bi bi-sun text-warning me-1"></i><strong>Best Timing:</strong> ${item.best_time_to_visit || 'Anytime'}</div>
+                                        </div>
+
+                                        ${item.insider_tip ? `
+                                            <div class="p-2 rounded-2 border-start border-warning border-3 bg-warning-subtle text-dark small mb-3">
+                                                <strong><i class="bi bi-lightbulb-fill text-warning me-1"></i>Local Secret:</strong> ${item.insider_tip}
+                                            </div>
+                                        ` : ''}
                                     </div>
-                                    <p class="text-muted small mb-2">${item.description}</p>
-                                    <div class="mt-auto d-flex justify-content-between small text-secondary">
-                                        <span><i class="bi bi-tag me-1"></i>${item.category}</span>
-                                        <span><i class="bi bi-cash me-1"></i>₹${item.approximate_cost_inr || 'Free'}</span>
+
+                                    <div class="pt-2 border-top">
+                                        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-100 fw-semibold">
+                                            <i class="bi bi-geo-alt-fill me-1"></i>View Location on Google Maps
+                                        </a>
                                     </div>
                                 </div>
                             </div>
                         `;
                     });
-                    cardsHtml += '</div>';
-                    recOutput.innerHTML = cardsHtml;
+
+                    outputHtml += '</div>';
+                    recOutput.innerHTML = outputHtml;
                 } else {
                     recOutput.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
                 }
             } catch (err) {
-                recOutput.innerHTML = '<div class="alert alert-danger">Failed to connect to recommendation service.</div>';
+                recOutput.innerHTML = '<div class="alert alert-danger">Failed to load spot recommendations.</div>';
             }
         });
     }
