@@ -53,7 +53,6 @@ def chat_endpoint():
     try:
         data = request.get_json() or {}
         user_message = data.get("message", "").strip()
-        lang_code = data.get("lang", Config.DEFAULT_LANGUAGE)
         destination = data.get("destination", "Global / Any Destination")
 
         if not user_message:
@@ -62,20 +61,67 @@ def chat_endpoint():
         ai_service = get_gemini_service()
         reply = ai_service.generate_chat_response(
             user_message=user_message,
-            lang_code=lang_code,
             destination=destination
         )
 
         return jsonify({
             "status": "success",
             "reply": reply,
-            "lang": lang_code,
             "destination": destination
         }), 200
 
     except Exception as e:
         logger.error(f"Error handling /api/chat request: {str(e)}", exc_info=True)
         return jsonify({"status": "error", "message": "Internal server error."}), 500
+
+
+@app.route("/api/vision", methods=["POST"])
+def vision_endpoint():
+    try:
+        image_bytes = None
+        mime_type = "image/jpeg"
+        destination = "Global / Any Destination"
+        user_query = ""
+
+        if "file" in request.files:
+            file = request.files["file"]
+            if file.filename == "":
+                return jsonify({"status": "error", "message": "No file selected."}), 400
+
+            image_bytes = file.read()
+            mime_type = file.mimetype or "image/jpeg"
+            destination = request.form.get("destination", "Global / Any Destination")
+            user_query = request.form.get("user_query", "")
+
+        elif request.is_json:
+            data = request.get_json() or {}
+            b64_str = data.get("image_base64", "")
+            if not b64_str:
+                return jsonify({"status": "error", "message": "Missing image data."}), 400
+
+            if "," in b64_str:
+                b64_str = b64_str.split(",")[1]
+
+            image_bytes = base64.b64decode(b64_str)
+            mime_type = data.get("mime_type", "image/jpeg")
+            destination = data.get("destination", "Global / Any Destination")
+            user_query = data.get("user_query", "")
+        else:
+            return jsonify({"status": "error", "message": "Invalid request format."}), 400
+
+        image_svc = get_image_service()
+        result = image_svc.analyze_image(
+            image_bytes=image_bytes,
+            mime_type=mime_type,
+            destination=destination,
+            user_query=user_query
+        )
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        logger.error(f"Error handling /api/vision request: {str(e)}", exc_info=True)
+        return jsonify({"status": "error", "message": "Failed to process image."}), 500
 
 
 @app.route("/api/recommendations", methods=["POST"])

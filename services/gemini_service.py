@@ -1,11 +1,11 @@
 """
 TravelMate AI — Core Gemini AI Service
-Includes multi-model fallback, auto-retries, chat handling, and travel phrase translation.
+Features zero-config auto-language detection, script-matching (e.g., Tanglish/Hinglish),
+and robust multi-model failover.
 """
 
 import logging
 import time
-from pathlib import Path
 from google import genai
 from google.genai import types
 from config import Config
@@ -19,33 +19,32 @@ class GeminiService:
             raise ValueError("GEMINI_API_KEY is missing. Check your .env file.")
 
         self.client = genai.Client(api_key=Config.GEMINI_API_KEY)
-        self.prompts_dir = Path(__file__).resolve().parent.parent / "prompts"
         self.active_model = "gemini-3.7-flash"
 
-    def _get_system_instruction(self, destination: str, lang_code: str) -> str:
-        language_name = Config.SUPPORTED_LANGUAGES.get(lang_code, "English")
-        prompt_path = self.prompts_dir / "chat_prompt.txt"
-
-        if prompt_path.exists():
-            template = prompt_path.read_text(encoding="utf-8")
-            return template.replace("{destination}", destination).replace("{language_name}", language_name)
-
+    def _get_system_instruction(self, destination: str) -> str:
         return (
-            f"You are TravelMate AI, an expert travel assistant. "
-            f"Context: {destination}. Respond clearly and engagingly in {language_name} using markdown formatting."
+            f"You are TravelMate AI, an expert real-time multilingual travel companion and cultural guide.\n"
+            f"Context / Destination: {destination}\n\n"
+            f"CORE LANGUAGE & SCRIPT RULES:\n"
+            f"1. AUTOMATIC LANGUAGE DETECTION: Detect the user's language automatically. You support EVERY language worldwide (Telugu, Hindi, Tamil, Kannada, Spanish, French, Japanese, etc.).\n"
+            f"2. SCRIPT & TRANSLITERATION MIRRORING:\n"
+            f"   - If the user types in native script (e.g., తెలుగు / हिन्दी / தமிழ்), reply in that exact native script.\n"
+            f"   - If the user types transliterated language (e.g., Telugu in English alphabet / 'Tanglish', Hindi in English / 'Hinglish'), reply in that EXACT SAME transliterated style.\n"
+            f"   - If the user asks in English, reply in clear English.\n"
+            f"3. FORMATTING: Use clean Markdown formatting (bullet points, bold text). Jump directly into the answer with NO conversational filler or markdown heading hashtags."
         )
 
     def generate_chat_response(
         self,
         user_message: str,
-        lang_code: str = "en",
         destination: str = "Global / Any Destination"
     ) -> str:
-        system_instruction = self._get_system_instruction(destination, lang_code)
+        system_instruction = self._get_system_instruction(destination)
 
         config = types.GenerateContentConfig(
             system_instruction=system_instruction,
-            max_output_tokens=2048
+            max_output_tokens=2048,
+            temperature=0.4
         )
 
         candidate_models = [
@@ -61,7 +60,7 @@ class GeminiService:
         for model in candidate_models:
             for attempt in range(2):
                 try:
-                    logger.info(f"Calling Gemini ({model}) [Attempt {attempt + 1}] | Target: {destination}")
+                    logger.info(f"Chat request with ({model}) [Attempt {attempt + 1}]")
                     response = self.client.models.generate_content(
                         model=model,
                         contents=user_message,
@@ -84,25 +83,26 @@ class GeminiService:
     def translate_phrase(
         self,
         phrase: str,
-        target_lang_code: str = "en",
+        target_lang: str = "auto",
         destination: str = "Global / Any Destination"
     ) -> str:
-        language_name = Config.SUPPORTED_LANGUAGES.get(target_lang_code, "English")
-
         prompt = (
-            f"You are an expert real-time travel translator and cultural guide.\n"
-            f"Translate the following traveler phrase into {language_name} ({target_lang_code}).\n"
-            f"Travel Destination / Context: {destination}\n\n"
-            f"Original Phrase: \"{phrase}\"\n\n"
-            f"Output strictly in the following Markdown format:\n"
-            f"* **Translation:** [Translated phrase in {language_name} script]\n"
-            f"* **Pronunciation (How to say it):** [Clear romanized phonetic guide for English speakers]\n"
-            f"* **Cultural Tip / Politeness Note:** [1 brief sentence on tone, etiquette, or practical local use]"
+            f"You are TravelMate AI's universal smart travel translator.\n"
+            f"Context / Destination: {destination}\n\n"
+            f"Input Phrase: \"{phrase}\"\n\n"
+            f"TASK:\n"
+            f"1. Detect the input language and user intent.\n"
+            f"2. If a target language is specified as '{target_lang}' (and not 'auto'), translate into '{target_lang}'. If 'auto', translate to the primary local language of the destination or to English if the input was non-English.\n"
+            f"3. Provide the output strictly in this Markdown format:\n"
+            f"* **Detected Input:** [Detected Language and Script]\n"
+            f"* **Translation:** [Translated text in native script]\n"
+            f"* **Phonetic Pronunciation:** [How to pronounce it using English letters]\n"
+            f"* **Traveler Note / Etiquette:** [1 practical usage tip]"
         )
 
         config = types.GenerateContentConfig(
-            temperature=0.4,
-            max_output_tokens=3000  # Increased to allow full menu translations without cutoff
+            temperature=0.2,
+            max_output_tokens=600
         )
 
         candidate_models = [
@@ -118,7 +118,7 @@ class GeminiService:
         for model in candidate_models:
             for attempt in range(2):
                 try:
-                    logger.info(f"Translating with Gemini ({model}) to {language_name}")
+                    logger.info(f"Translating phrase with ({model})")
                     response = self.client.models.generate_content(
                         model=model,
                         contents=prompt,

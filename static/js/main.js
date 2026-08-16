@@ -2,42 +2,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     // -------------------------------------------------------------------
-    // 0. MULTILINGUAL UI LOCALIZATION ENGINE
-    // -------------------------------------------------------------------
-    const globalLangSelect = document.getElementById("globalLangSelect");
-    let currentLang = globalLangSelect ? globalLangSelect.value : "en";
-
-    function applyLanguage(lang) {
-        currentLang = lang;
-        if (typeof UI_TRANSLATIONS === "undefined") return;
-
-        const dict = UI_TRANSLATIONS[lang] || UI_TRANSLATIONS["en"];
-        if (!dict) return;
-
-        document.querySelectorAll("[data-i18n]").forEach((el) => {
-            const key = el.getAttribute("data-i18n");
-            if (dict[key]) {
-                el.textContent = dict[key];
-            }
-        });
-
-        document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
-            const key = el.getAttribute("data-i18n-placeholder");
-            if (dict[key]) {
-                el.placeholder = dict[key];
-            }
-        });
-    }
-
-    if (globalLangSelect) {
-        globalLangSelect.addEventListener("change", (e) => {
-            applyLanguage(e.target.value);
-        });
-        applyLanguage(currentLang);
-    }
-
-    // -------------------------------------------------------------------
-    // MARKDOWN FORMATTER (Headings, Dividers, Bold, Italics, Lists)
+    // MARKDOWN FORMATTER (Clean hierarchy, No raw # markers)
     // -------------------------------------------------------------------
     function formatMarkdown(text) {
         if (!text) return "";
@@ -58,11 +23,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // STREAMING / TYPEWRITER EFFECT (Word by Word)
+    // STREAMING / TYPEWRITER EFFECT
     // -------------------------------------------------------------------
-    function streamTextWordByWord(element, fullText, speed = 25) {
+    function streamTextWordByWord(element, fullText, speed = 20) {
         element.innerHTML = "";
-        const words = fullText.split(/(\s+)/); // Preserves spacing and newlines
+        const words = fullText.split(/(\s+)/);
         let index = 0;
         let currentString = "";
 
@@ -74,7 +39,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 index++;
             } else {
                 clearInterval(interval);
-                // Ensure complete formatting is applied at the end
                 element.innerHTML = formatMarkdown(fullText);
                 chatWindow.scrollTop = chatWindow.scrollHeight;
             }
@@ -82,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 1. CHAT ASSISTANT HANDLER
+    // 1. CHAT ASSISTANT HANDLER (Auto Language Detection)
     // -------------------------------------------------------------------
     const chatForm = document.getElementById("chatForm");
     const chatInput = document.getElementById("chatInput");
@@ -94,11 +58,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const msg = chatInput.value.trim();
             if (!msg) return;
 
-            // Append user bubble
             appendChatBubble(msg, "user");
             chatInput.value = "";
 
-            // Append animated thinking placeholder
             const loadingBubble = appendChatBubble("Thinking...", "bot");
             loadingBubble.innerHTML = '<span class="spinner-grow spinner-grow-sm me-2 text-primary" role="status"></span>Typing...';
 
@@ -106,12 +68,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 const res = await fetch("/api/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: msg, lang: currentLang })
+                    body: JSON.stringify({ message: msg })
                 });
                 const data = await res.json();
                 
                 if (data.status === "success") {
-                    // Stream word-by-word into the bubble
                     streamTextWordByWord(loadingBubble, data.reply, 20);
                 } else {
                     loadingBubble.textContent = "Error: " + (data.message || "Failed to respond.");
@@ -148,8 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 destination: document.getElementById("recDestination").value,
                 traveller_type: document.getElementById("recTravellerType").value,
                 budget_level: document.getElementById("recBudget").value,
-                interests: interests,
-                lang: currentLang
+                interests: interests
             };
 
             try {
@@ -168,10 +128,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     recs.forEach(item => {
                         cardsHtml += `
                             <div class="col-md-6">
-                                <div class="card feature-card h-100 p-3">
+                                <div class="card feature-card h-100 p-3 shadow-sm border-0">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <h6 class="fw-bold m-0">${item.name}</h6>
-                                        <span class="score-badge small">Match: ${(item.match_score * 100).toFixed(0)}%</span>
+                                        <span class="badge bg-primary-subtle text-primary">Match: ${(item.match_score * 100).toFixed(0)}%</span>
                                     </div>
                                     <p class="text-muted small mb-2">${item.description}</p>
                                     <div class="mt-auto d-flex justify-content-between small text-secondary">
@@ -208,8 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 destination: document.getElementById("itinDestination").value,
                 num_days: parseInt(document.getElementById("itinDays").value),
                 budget_level: document.getElementById("itinBudget").value,
-                traveller_type: document.getElementById("itinStyle").value,
-                lang: currentLang
+                traveller_type: document.getElementById("itinStyle").value
             };
 
             try {
@@ -222,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (data.status === "success") {
                     itinOutput.innerHTML = `
-                        <div class="card feature-card p-4">
+                        <div class="card feature-card p-4 shadow-sm border-0">
                             <h6 class="fw-bold text-primary mb-3"><i class="bi bi-map me-2"></i>${data.data.num_days}-Day Itinerary for ${data.data.destination}</h6>
                             <div>${formatMarkdown(data.data.itinerary)}</div>
                         </div>
@@ -244,7 +203,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const imagePreview = document.getElementById("imagePreview");
     const visionForm = document.getElementById("visionForm");
     const visionOutput = document.getElementById("visionOutput");
-    const visionTargetLang = document.getElementById("visionTargetLang");
 
     if (visionFile && imagePreview && imagePreviewContainer) {
         visionFile.addEventListener("change", () => {
@@ -268,11 +226,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             visionOutput.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Analyzing image with Gemini Vision...</p></div>';
 
-            const selectedLang = visionTargetLang ? visionTargetLang.value : currentLang;
-
             const formData = new FormData();
             formData.append("file", file);
-            formData.append("target_lang", selectedLang);
             formData.append("destination", "Global / Any Destination");
             formData.append("user_query", document.getElementById("visionQuery") ? document.getElementById("visionQuery").value : "");
 
@@ -285,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (data.status === "success") {
                     visionOutput.innerHTML = `
-                        <div class="card feature-card p-4">
+                        <div class="card feature-card p-4 shadow-sm border-0">
                             <h6 class="fw-bold text-primary mb-3"><i class="bi bi-eye me-2"></i>Vision Analysis Result</h6>
                             <div>${formatMarkdown(data.analysis)}</div>
                         </div>
@@ -300,12 +255,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 5. TRANSLATOR HANDLER
+    // 5. TRANSLATOR HANDLER (Auto-Detect)
     // -------------------------------------------------------------------
     const transForm = document.getElementById("translateForm");
     const transText = document.getElementById("transText");
     const transOutput = document.getElementById("translateOutput");
-    const transTargetLang = document.getElementById("transTargetLang");
     const transMicBtn = document.getElementById("transMicBtn");
 
     document.querySelectorAll(".quick-phrase-chip").forEach(chip => {
@@ -344,8 +298,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const textToTranslate = transText.value.trim();
             if (!textToTranslate) return;
 
-            const selectedLang = transTargetLang ? transTargetLang.value : currentLang;
-
             transOutput.innerHTML = '<div class="text-center p-3"><div class="spinner-border text-primary" role="status"></div></div>';
 
             try {
@@ -354,7 +306,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         text: textToTranslate,
-                        target_lang: selectedLang,
                         destination: "Global / Any Destination"
                     })
                 });
@@ -364,9 +315,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     const rawText = data.data.translation_data || "";
                     
                     transOutput.innerHTML = `
-                        <div class="card feature-card p-4">
+                        <div class="card feature-card p-4 shadow-sm border-0">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold text-primary m-0"><i class="bi bi-check2-circle me-1"></i>Translation Result (${data.data.target_language})</h6>
+                                <h6 class="fw-bold text-primary m-0"><i class="bi bi-check2-circle me-1"></i>Translation Result</h6>
                                 <button class="btn btn-sm btn-outline-primary" id="playAudioBtn">
                                     <i class="bi bi-volume-up-fill me-1"></i>Listen (TTS)
                                 </button>
@@ -378,8 +329,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     const playBtn = document.getElementById("playAudioBtn");
                     if (playBtn && 'speechSynthesis' in window) {
                         playBtn.addEventListener("click", () => {
-                            const utterance = new SpeechSynthesisUtterance(rawText.replace(/[*#]/g, ''));
-                            window.speechSynthesis.speak(utterance);
+                            const cleanText = rawText.replace(/[*#]/g, '');
+                            window.speechSynthesis.speak(new SpeechSynthesisUtterance(cleanText));
                         });
                     }
                 } else {

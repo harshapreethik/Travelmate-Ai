@@ -1,6 +1,6 @@
 """
 TravelMate AI — Image & Multimodal Vision Service
-Fast, direct OCR and query-first image analysis without unnecessary fluff.
+Universal language auto-detection for menu parsing, landmark OCR, and sign translation.
 """
 
 import io
@@ -26,35 +26,19 @@ class ImageService:
         self,
         image_bytes: bytes,
         mime_type: str = "image/jpeg",
-        target_lang: str = "en",
         destination: str = "Global / Any Destination",
         user_query: str = ""
     ) -> dict:
-        language_name = Config.SUPPORTED_LANGUAGES.get(target_lang, "English")
-
-        # Dynamic prompt prioritizing direct answers
-        if user_query.strip():
-            prompt = (
-                f"You are TravelMate AI's direct visual assistant.\n"
-                f"Analyze this image to answer the user's specific request: \"{user_query.strip()}\"\n"
-                f"Target Language: {language_name}\n"
-                f"Context / Destination: {destination}\n\n"
-                f"RULES:\n"
-                f"1. Answer the user's question directly in the first sentence. No introductory filler (e.g., do NOT say 'Based on the provided image...').\n"
-                f"2. Group the findings clearly using concise Markdown bullet points and bold headers.\n"
-                f"3. Include item names, translations, prices (if visible), and relevant dietary or travel warnings."
-            )
-        else:
-            prompt = (
-                f"You are TravelMate AI's direct visual assistant.\n"
-                f"Analyze this travel image (signboard, menu, plaque, or landmark).\n"
-                f"Target Language: {language_name}\n"
-                f"Context / Destination: {destination}\n\n"
-                f"Provide a clear, scannable response with NO introductory fluff:\n"
-                f"* **Text & Translation:** [Key text transcribed and translated to {language_name}]\n"
-                f"* **What It Means:** [1-2 concise sentences on what this is]\n"
-                f"* **Traveler Action / Warning:** [Immediate advice on what to do or be cautious of]"
-            )
+        prompt = (
+            f"You are TravelMate AI's universal multimodal visual assistant.\n"
+            f"Analyze this image (signboard, menu, monument, or object).\n"
+            f"Context / Destination: {destination}\n"
+            f"User Query: \"{user_query.strip() if user_query else 'Explain this image, transcribe any text, and give practical tourist guidance.'}\"\n\n"
+            f"RULES:\n"
+            f"1. Match the language and script style of the user's query. If the query is in Telugu (native or English script), reply in that style. If no query is provided, explain clearly in English with translated terms.\n"
+            f"2. Transcribe original text from the image, translate it, and highlight any dietary/safety warnings.\n"
+            f"3. Do NOT use introductory filler. Start directly with structured findings using bold headers and bullet points."
+        )
 
         try:
             pil_image = Image.open(io.BytesIO(image_bytes))
@@ -79,7 +63,7 @@ class ImageService:
         for model in candidate_models:
             for attempt in range(2):
                 try:
-                    logger.info(f"Analyzing image with ({model}) [Attempt {attempt + 1}] | Query: {user_query}")
+                    logger.info(f"Analyzing image with ({model}) [Attempt {attempt + 1}]")
                     response = self.client.models.generate_content(
                         model=model,
                         contents=[pil_image, prompt],
