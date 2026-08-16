@@ -14,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const dict = UI_TRANSLATIONS[lang] || UI_TRANSLATIONS["en"];
         if (!dict) return;
 
-        // Update inner text for all data-i18n elements
         document.querySelectorAll("[data-i18n]").forEach((el) => {
             const key = el.getAttribute("data-i18n");
             if (dict[key]) {
@@ -22,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // Update input placeholders for all data-i18n-placeholder elements
         document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
             const key = el.getAttribute("data-i18n-placeholder");
             if (dict[key]) {
@@ -35,7 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
         globalLangSelect.addEventListener("change", (e) => {
             applyLanguage(e.target.value);
         });
-        // Initial application on load
         applyLanguage(currentLang);
     }
 
@@ -44,22 +41,44 @@ document.addEventListener("DOMContentLoaded", () => {
     // -------------------------------------------------------------------
     function formatMarkdown(text) {
         if (!text) return "";
-        return text
-            // Horizontal dividers: ---, ___, ***
+        let html = text
             .replace(/^(?:---|___|\*\*\*)$/gm, '<hr class="my-3 border-secondary-subtle">')
-            // Headings: ###, ##, #
-            .replace(/^### (.*$)/gm, '<h6 class="fw-bold text-primary mt-3 mb-2">$1</h6>')
-            .replace(/^## (.*$)/gm, '<h5 class="fw-bold text-primary mt-3 mb-2">$1</h5>')
-            .replace(/^# (.*$)/gm, '<h4 class="fw-bold text-primary mt-3 mb-2">$1</h4>')
-            // Bold: **text** -> <strong>text</strong>
+            .replace(/^#### (.*$)/gm, '<h6 class="fw-bold text-dark mt-3 mb-1">$1</h6>')
+            .replace(/^### (.*$)/gm, '<h5 class="fw-bold text-primary mt-3 mb-2">$1</h5>')
+            .replace(/^## (.*$)/gm, '<h4 class="fw-bold text-primary mt-4 mb-2">$1</h4>')
+            .replace(/^# (.*$)/gm, '<h3 class="fw-bold text-primary mt-4 mb-3">$1</h3>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            // Italics: *text* -> <em>text</em>
             .replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
-            // Bullet points: * text or - text
             .replace(/^\s*[\*\-]\s+(.*)$/gm, '<li class="ms-3 mb-1">$1</li>')
-            // Convert plain newlines to line breaks
             .replace(/\n{2,}/g, '<br><br>')
             .replace(/\n/g, '<br>');
+
+        html = html.replace(/(<li class="ms-3 mb-1">[\s\S]*?<\/li>)/gm, '<ul class="mb-2 ps-2">$1</ul>');
+        return html;
+    }
+
+    // -------------------------------------------------------------------
+    // STREAMING / TYPEWRITER EFFECT (Word by Word)
+    // -------------------------------------------------------------------
+    function streamTextWordByWord(element, fullText, speed = 25) {
+        element.innerHTML = "";
+        const words = fullText.split(/(\s+)/); // Preserves spacing and newlines
+        let index = 0;
+        let currentString = "";
+
+        const interval = setInterval(() => {
+            if (index < words.length) {
+                currentString += words[index];
+                element.innerHTML = formatMarkdown(currentString);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+                index++;
+            } else {
+                clearInterval(interval);
+                // Ensure complete formatting is applied at the end
+                element.innerHTML = formatMarkdown(fullText);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+        }, speed);
     }
 
     // -------------------------------------------------------------------
@@ -79,8 +98,9 @@ document.addEventListener("DOMContentLoaded", () => {
             appendChatBubble(msg, "user");
             chatInput.value = "";
 
-            // Append loading placeholder
+            // Append animated thinking placeholder
             const loadingBubble = appendChatBubble("Thinking...", "bot");
+            loadingBubble.innerHTML = '<span class="spinner-grow spinner-grow-sm me-2 text-primary" role="status"></span>Typing...';
 
             try {
                 const res = await fetch("/api/chat", {
@@ -91,7 +111,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const data = await res.json();
                 
                 if (data.status === "success") {
-                    loadingBubble.innerHTML = formatMarkdown(data.reply);
+                    // Stream word-by-word into the bubble
+                    streamTextWordByWord(loadingBubble, data.reply, 20);
                 } else {
                     loadingBubble.textContent = "Error: " + (data.message || "Failed to respond.");
                 }
@@ -223,6 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const imagePreview = document.getElementById("imagePreview");
     const visionForm = document.getElementById("visionForm");
     const visionOutput = document.getElementById("visionOutput");
+    const visionTargetLang = document.getElementById("visionTargetLang");
 
     if (visionFile && imagePreview && imagePreviewContainer) {
         visionFile.addEventListener("change", () => {
@@ -246,9 +268,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             visionOutput.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Analyzing image with Gemini Vision...</p></div>';
 
+            const selectedLang = visionTargetLang ? visionTargetLang.value : currentLang;
+
             const formData = new FormData();
             formData.append("file", file);
-            formData.append("target_lang", currentLang);
+            formData.append("target_lang", selectedLang);
             formData.append("destination", "Global / Any Destination");
             formData.append("user_query", document.getElementById("visionQuery") ? document.getElementById("visionQuery").value : "");
 
@@ -275,8 +299,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-// -------------------------------------------------------------------
-    // 5. TRANSLATOR HANDLER (CHIPS, SPEECH-TO-TEXT & AUDIO TTS)
+    // -------------------------------------------------------------------
+    // 5. TRANSLATOR HANDLER
     // -------------------------------------------------------------------
     const transForm = document.getElementById("translateForm");
     const transText = document.getElementById("transText");
@@ -284,7 +308,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const transTargetLang = document.getElementById("transTargetLang");
     const transMicBtn = document.getElementById("transMicBtn");
 
-    // 1-Tap Quick Phrase Chips
     document.querySelectorAll(".quick-phrase-chip").forEach(chip => {
         chip.addEventListener("click", () => {
             if (transText) {
@@ -294,7 +317,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Voice Input (Speech Recognition)
     if (transMicBtn && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
@@ -353,7 +375,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     `;
 
-                    // Audio Text-to-Speech button
                     const playBtn = document.getElementById("playAudioBtn");
                     if (playBtn && 'speechSynthesis' in window) {
                         playBtn.addEventListener("click", () => {
@@ -371,7 +392,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 6. EMERGENCY DIRECTORY (INSTANT DYNAMIC DROPDOWNS & LOCAL CACHING)
+    // 6. EMERGENCY DIRECTORY
     // -------------------------------------------------------------------
     const emCountrySelect = document.getElementById("emCountrySelect");
     const emStateSelect = document.getElementById("emStateSelect");

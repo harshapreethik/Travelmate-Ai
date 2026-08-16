@@ -1,1 +1,1 @@
-web: gunicorn app:app
+web: gunicorn app:appgit commit -m "Initial commit for TravelMate AI"
