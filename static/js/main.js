@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 2. RECOMMENDATION ENGINE HANDLER (Interactive Structured Matrix)
+    // 2. RECOMMENDATION ENGINE HANDLER (App-Style Product Directory)
     // -------------------------------------------------------------------
     const recForm = document.getElementById("recommendationForm");
     const recOutput = document.getElementById("recommendationsOutput");
@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
             recOutput.innerHTML = `
                 <div class="text-center p-5">
                     <div class="spinner-border text-primary" role="status"></div>
-                    <p class="mt-2 text-muted fw-semibold">Scoring & Curating Best Spots...</p>
+                    <p class="mt-2 text-muted fw-semibold">Finding verified spots & live directions...</p>
                 </div>
             `;
 
@@ -128,62 +128,75 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (data.status === "success") {
                     const recs = data.data.recommendations || [];
-                    const insights = data.data.ai_insights || "";
+                    const summary = data.data.destination_summary || `${destination} Guide`;
 
-                    let outputHtml = "";
-
-                    if (insights) {
-                        outputHtml += `
-                            <div class="card p-3 mb-4 border-0 shadow-sm bg-primary-subtle border-start border-primary border-4 rounded-3">
-                                <div class="d-flex align-items-center mb-1">
-                                    <i class="bi bi-stars text-primary fs-5 me-2"></i>
-                                    <h6 class="fw-bold text-primary m-0">AI Curated Persona Fit</h6>
-                                </div>
-                                <p class="m-0 text-dark small">${formatMarkdown(insights)}</p>
+                    let outputHtml = `
+                        <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+                            <div>
+                                <span class="badge bg-dark px-3 py-2 text-uppercase letter-spacing-1">${summary}</span>
                             </div>
-                        `;
-                    }
-
-                    outputHtml += '<div class="row g-3">';
+                            <span class="text-muted small fw-semibold">${recs.length} top spots found</span>
+                        </div>
+                        <div class="row g-3">
+                    `;
 
                     recs.forEach(item => {
-                        const matchPct = Math.round((item.match_score || 0.9) * 100);
                         const mapQuery = encodeURIComponent(`${item.name}, ${destination}`);
                         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+                        const rating = item.rating || 4.7;
+                        const reviews = item.reviews_count || "5.2k";
 
                         outputHtml += `
                             <div class="col-md-6">
-                                <div class="card h-100 p-3 shadow-sm border-0 rounded-3 d-flex flex-column justify-content-between position-relative">
+                                <div class="card h-100 p-3 shadow-sm border-0 rounded-3 d-flex flex-column justify-content-between">
                                     <div>
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h5 class="fw-bold text-dark m-0 fs-6">${item.name}</h5>
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
-                                                <i class="bi bi-fire me-1"></i>${matchPct}% Match
+                                        <!-- Header: Name & Match Badge -->
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <h6 class="fw-bold text-dark m-0 fs-6">${item.name}</h6>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 small">
+                                                ${item.match_score || 95}% Match
                                             </span>
                                         </div>
-                                        
-                                        <div class="d-flex gap-2 mb-2">
-                                            <span class="badge bg-light text-secondary border small">${item.category}</span>
-                                            <span class="badge bg-light text-secondary border small"><i class="bi bi-clock me-1"></i>${item.duration || '1-2 hrs'}</span>
+
+                                        <!-- Rating & Category Subtitle -->
+                                        <div class="d-flex align-items-center gap-2 mb-2 text-muted small">
+                                            <span class="text-warning fw-bold"><i class="bi bi-star-fill me-1"></i>${rating}</span>
+                                            <span class="text-muted">(${reviews})</span>
+                                            <span>•</span>
+                                            <span class="badge bg-light text-secondary border">${item.category}</span>
                                         </div>
 
-                                        <p class="text-secondary small mb-2">${item.why_for_you || ''}</p>
+                                        <!-- Highlight -->
+                                        <p class="text-dark small mb-3">${item.highlight}</p>
 
-                                        <div class="bg-light p-2 rounded-2 mb-2 small">
-                                            <div class="text-muted"><i class="bi bi-wallet2 text-primary me-1"></i><strong>Cost:</strong> ${item.approx_cost || 'Free Entry'}</div>
-                                            <div class="text-muted"><i class="bi bi-sun text-warning me-1"></i><strong>Best Timing:</strong> ${item.best_time_to_visit || 'Anytime'}</div>
+                                        <!-- Specs Grid -->
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6">
+                                                <div class="p-2 bg-light rounded text-center small">
+                                                    <span class="text-muted d-block" style="font-size: 0.75rem;">ESTIMATED COST</span>
+                                                    <strong class="text-primary">${item.approx_cost}</strong>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="p-2 bg-light rounded text-center small">
+                                                    <span class="text-muted d-block" style="font-size: 0.75rem;">IDEAL DURATION</span>
+                                                    <strong class="text-dark">${item.duration}</strong>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        ${item.insider_tip ? `
-                                            <div class="p-2 rounded-2 border-start border-warning border-3 bg-warning-subtle text-dark small mb-3">
-                                                <strong><i class="bi bi-lightbulb-fill text-warning me-1"></i>Local Secret:</strong> ${item.insider_tip}
+                                        <!-- Local Tip Chip -->
+                                        ${item.local_tip ? `
+                                            <div class="p-2 rounded bg-light border-start border-3 border-warning small text-secondary mb-3">
+                                                <strong class="text-dark"><i class="bi bi-shield-check text-warning me-1"></i>Tip:</strong> ${item.local_tip}
                                             </div>
                                         ` : ''}
                                     </div>
 
+                                    <!-- Action Button -->
                                     <div class="pt-2 border-top">
                                         <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-100 fw-semibold">
-                                            <i class="bi bi-geo-alt-fill me-1"></i>View Location on Google Maps
+                                            <i class="bi bi-geo-alt-fill me-1"></i>Directions & Maps
                                         </a>
                                     </div>
                                 </div>

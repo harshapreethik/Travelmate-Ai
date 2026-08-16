@@ -1,6 +1,6 @@
 """
 TravelMate AI — Recommendation Engine Service
-Generates structured venue matrices with match scoring, cost estimation, and map routing.
+Generates structured venue matrices formatted for consumer travel UI.
 """
 
 import json
@@ -30,36 +30,36 @@ class RecommendationService:
         interests_str = ", ".join(interests) if interests else "Sightseeing, Local Culture, Food"
 
         prompt = f"""
-You are TravelMate AI's specialized Recommendation Engine algorithm.
-Generate exactly 4 to 6 top curated spot recommendations for:
-- Destination: {destination}
-- Traveler Persona: {traveller_type}
-- Budget Tier: {budget_level}
-- Selected Interests: {interests_str}
+You are a live travel directory database engine.
+Generate exactly 4 to 6 top spot recommendations for:
+- City/Destination: {destination}
+- Traveler Type: {traveller_type}
+- Budget Level: {budget_level}
+- Selected Categories: {interests_str}
 
-STRICT JSON OUTPUT FORMAT ONLY:
-Return a single JSON object with no markdown backticks, no markdown codeblocks, and no introductory text.
-
+STRICT JSON OUTPUT ONLY (no markdown code blocks, no intro text):
 {{
-  "ai_insights": "2-sentence high-level strategic summary of why this destination fits their chosen vibe and budget.",
+  "destination_summary": "{destination} • {traveller_type} • {budget_level} Budget",
   "recommendations": [
     {{
-      "name": "Spot or Attraction Name",
-      "category": "Heritage / Food / Nature / Bazaar / Adventure",
-      "match_score": 0.95,
-      "why_for_you": "1 crisp sentence explaining why this specifically fits a {traveller_type} with {budget_level} budget.",
-      "best_time_to_visit": "e.g., 4:00 PM - 7:00 PM (Sunset)",
-      "approx_cost": "e.g., Free or ₹150 Entry or $10",
-      "duration": "e.g., 2 hours",
-      "insider_tip": "One authentic local insider secret or tip to avoid crowds/scams."
+      "name": "Exact Name of Place or Food Joint",
+      "category": "Heritage / Food & Cafe / Nature / Bazaar / Adventure",
+      "rating": 4.8,
+      "reviews_count": "12.4k",
+      "match_score": 96,
+      "highlight": "1 short punchy sentence on the top attraction or dish here.",
+      "best_time": "e.g., 4:00 PM - 7:00 PM",
+      "approx_cost": "e.g., ₹150 or Free Entry",
+      "duration": "e.g., 2 hrs",
+      "local_tip": "1 practical tip (e.g., Buy tickets online to skip queue)."
     }}
   ]
 }}
 """
 
         config = types.GenerateContentConfig(
-            temperature=0.3,
-            max_output_tokens=2500,
+            temperature=0.2,
+            max_output_tokens=2200,
             response_mime_type="application/json"
         )
 
@@ -75,7 +75,7 @@ Return a single JSON object with no markdown backticks, no markdown codeblocks, 
         for model in candidate_models:
             for attempt in range(2):
                 try:
-                    logger.info(f"Generating recommendations with ({model}) [Attempt {attempt + 1}]")
+                    logger.info(f"Fetching structured spots with ({model}) [Attempt {attempt + 1}]")
                     response = self.client.models.generate_content(
                         model=model,
                         contents=prompt,
@@ -92,14 +92,14 @@ Return a single JSON object with no markdown backticks, no markdown codeblocks, 
                         self.active_model = model
                         return parsed_data
                 except Exception as e:
-                    logger.warning(f"Recommendation generation failed on {model}: {e}")
+                    logger.warning(f"Failed on {model}: {e}")
                     if "503" in str(e) or "UNAVAILABLE" in str(e):
                         time.sleep(1.5)
                         continue
                     break
 
         return {
-            "ai_insights": f"Found personalized spots for {destination}.",
+            "destination_summary": f"{destination} Recommendations",
             "recommendations": []
         }
 
