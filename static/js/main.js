@@ -1,6 +1,9 @@
 /* TravelMate AI — Frontend Logic Manager */
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Persistent state for trip cart
+    let tripCart = [];
+
     // -------------------------------------------------------------------
     // 0. CLICKABLE SUGGESTION PILLS
     // -------------------------------------------------------------------
@@ -17,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // -------------------------------------------------------------------
-    // MARKDOWN FORMATTER (Clean hierarchy, No raw # markers)
+    // MARKDOWN FORMATTER
     // -------------------------------------------------------------------
     function formatMarkdown(text) {
         if (!text) return "";
@@ -61,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 1. CHAT ASSISTANT HANDLER (Universal Auto Language & Script)
+    // 1. CHAT ASSISTANT HANDLER
     // -------------------------------------------------------------------
     const chatWindow = document.getElementById("chatWindow");
 
@@ -106,10 +109,72 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 2. RECOMMENDATION ENGINE HANDLER (Product Directory Style)
+    // 2. RECOMMENDATIONS & TRIP CART SYSTEM
     // -------------------------------------------------------------------
     const recForm = document.getElementById("recommendationForm");
     const recOutput = document.getElementById("recommendationsOutput");
+    const recSlider = document.getElementById("recBudgetSlider");
+    const recInput = document.getElementById("recBudgetInput");
+    const recDisplay = document.getElementById("recBudgetDisplay");
+    const cartCountBadge = document.getElementById("cartCountBadge");
+    const floatingCartBar = document.getElementById("floatingCartBar");
+    const floatingCartCount = document.getElementById("floatingCartCount");
+    const floatingCartItems = document.getElementById("floatingCartItems");
+    const floatingCheckoutBtn = document.getElementById("floatingCheckoutBtn");
+
+    if (recSlider && recInput) {
+        function updateRecBudget(val) {
+            let num = parseInt(val) || 0;
+            if (recDisplay) recDisplay.textContent = num === 0 ? "Free Entry Only" : `₹${num.toLocaleString("en-IN")}`;
+        }
+        recSlider.addEventListener("input", (e) => {
+            recInput.value = e.target.value;
+            updateRecBudget(e.target.value);
+        });
+        recInput.addEventListener("input", (e) => {
+            recSlider.value = e.target.value;
+            updateRecBudget(e.target.value);
+        });
+    }
+
+    function updateCartUI() {
+        const count = tripCart.length;
+
+        // Nav Tab Badge
+        if (cartCountBadge) {
+            if (count > 0) {
+                cartCountBadge.textContent = count;
+                cartCountBadge.classList.remove("d-none");
+            } else {
+                cartCountBadge.classList.add("d-none");
+            }
+        }
+
+        // Floating Cart Bar at bottom
+        if (floatingCartBar) {
+            if (count > 0) {
+                floatingCartBar.classList.remove("d-none");
+                floatingCartBar.classList.add("d-flex");
+                if (floatingCartCount) floatingCartCount.textContent = count;
+                if (floatingCartItems) floatingCartItems.textContent = tripCart.join(" • ");
+            } else {
+                floatingCartBar.classList.add("d-none");
+                floatingCartBar.classList.remove("d-flex");
+            }
+        }
+
+        renderCartInItinerary();
+    }
+
+    if (floatingCheckoutBtn) {
+        floatingCheckoutBtn.addEventListener("click", () => {
+            const itinTab = document.getElementById("itin-tab");
+            if (itinTab) {
+                const tabInstance = new bootstrap.Tab(itinTab);
+                tabInstance.show();
+            }
+        });
+    }
 
     if (recForm && recOutput) {
         recForm.addEventListener("submit", async (e) => {
@@ -117,17 +182,22 @@ document.addEventListener("DOMContentLoaded", () => {
             recOutput.innerHTML = `
                 <div class="text-center p-5">
                     <div class="spinner-border text-primary" role="status"></div>
-                    <p class="mt-2 text-muted fw-semibold">Finding verified spots & live directions...</p>
+                    <p class="mt-2 text-muted fw-semibold">Finding verified spots & local culinary gems...</p>
                 </div>
             `;
 
             const destination = document.getElementById("recDestination").value.trim();
             const interests = Array.from(document.querySelectorAll(".rec-interest:checked")).map(cb => cb.value);
+            const maxBudget = recInput ? `Under ₹${recInput.value}` : "Moderate";
+
+            // Sync destination to itinerary
+            const itinDestInput = document.getElementById("itinDestination");
+            if (itinDestInput) itinDestInput.value = destination;
 
             const payload = {
                 destination: destination,
                 traveller_type: document.getElementById("recTravellerType").value,
-                budget_level: document.getElementById("recBudget").value,
+                budget_level: maxBudget,
                 interests: interests
             };
 
@@ -148,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div>
                                 <span class="badge bg-dark px-3 py-2 text-uppercase letter-spacing-1">${summary}</span>
                             </div>
-                            <span class="text-muted small fw-semibold">${recs.length} top spots found</span>
+                            <span class="text-muted small fw-semibold">${recs.length} spots curated</span>
                         </div>
                         <div class="row g-3">
                     `;
@@ -158,6 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
                         const rating = item.rating || 4.8;
                         const reviews = item.reviews_count || "5.2k";
+                        const inCart = tripCart.includes(item.name);
 
                         outputHtml += `
                             <div class="col-md-6">
@@ -201,9 +272,12 @@ document.addEventListener("DOMContentLoaded", () => {
                                         ` : ''}
                                     </div>
 
-                                    <div class="pt-2 border-top">
-                                        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-100 fw-semibold">
-                                            <i class="bi bi-geo-alt-fill me-1"></i>Directions & Maps
+                                    <div class="pt-2 border-top d-flex gap-2">
+                                        <button type="button" class="btn btn-sm ${inCart ? 'btn-success' : 'btn-outline-dark'} w-50 add-cart-btn" data-name="${item.name}">
+                                            <i class="bi ${inCart ? 'bi-check-lg' : 'bi-cart-plus'} me-1"></i>${inCart ? 'In Trip Cart' : '+ Add to Trip'}
+                                        </button>
+                                        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-50 fw-semibold">
+                                            <i class="bi bi-geo-alt-fill me-1"></i>Directions
                                         </a>
                                     </div>
                                 </div>
@@ -213,6 +287,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     outputHtml += '</div>';
                     recOutput.innerHTML = outputHtml;
+
+                    // Click listeners for Cart buttons
+                    document.querySelectorAll(".add-cart-btn").forEach(btn => {
+                        btn.addEventListener("click", () => {
+                            const place = btn.getAttribute("data-name");
+                            if (tripCart.includes(place)) {
+                                tripCart = tripCart.filter(p => p !== place);
+                                btn.className = "btn btn-sm btn-outline-dark w-50 add-cart-btn";
+                                btn.innerHTML = '<i class="bi bi-cart-plus me-1"></i>+ Add to Trip';
+                            } else {
+                                tripCart.push(place);
+                                btn.className = "btn btn-sm btn-success w-50 add-cart-btn";
+                                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>In Trip Cart';
+                            }
+                            updateCartUI();
+                        });
+                    });
+
                 } else {
                     recOutput.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
                 }
@@ -223,29 +315,60 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 3. ITINERARY BUILDER & INTERACTIVE BUDGET SLIDER
+    // 3. ITINERARY BUILDER & FOOD PLANNING
     // -------------------------------------------------------------------
     const budgetSlider = document.getElementById("itinBudgetSlider");
     const budgetInput = document.getElementById("itinBudgetInput");
     const budgetDisplay = document.getElementById("budgetDisplay");
     const itinForm = document.getElementById("itineraryForm");
     const itinOutput = document.getElementById("itineraryOutput");
+    const cartTrayContainer = document.getElementById("cartTrayContainer");
+    const cartBadges = document.getElementById("cartBadges");
+    const clearCartBtn = document.getElementById("clearCartBtn");
+
+    function renderCartInItinerary() {
+        if (!cartTrayContainer || !cartBadges) return;
+
+        if (tripCart.length > 0) {
+            cartTrayContainer.classList.remove("d-none");
+            cartBadges.innerHTML = "";
+            tripCart.forEach(place => {
+                const badge = document.createElement("span");
+                badge.className = "badge bg-dark text-white px-2 py-1";
+                badge.innerHTML = `${place} <i class="bi bi-x-circle ms-1 cursor-pointer" data-remove="${place}"></i>`;
+                cartBadges.appendChild(badge);
+            });
+
+            cartBadges.querySelectorAll("[data-remove]").forEach(xBtn => {
+                xBtn.addEventListener("click", () => {
+                    const toRemove = xBtn.getAttribute("data-remove");
+                    tripCart = tripCart.filter(p => p !== toRemove);
+                    updateCartUI();
+                });
+            });
+        } else {
+            cartTrayContainer.classList.add("d-none");
+        }
+    }
+
+    if (clearCartBtn) {
+        clearCartBtn.addEventListener("click", () => {
+            tripCart = [];
+            updateCartUI();
+        });
+    }
 
     function updateBudgetTier(val) {
         let num = parseInt(val) || 0;
         let tier = "Budget";
-        let badgeClass = "bg-success-subtle text-success border border-success-subtle";
 
         if (num > 15000) {
             tier = "Luxury";
-            badgeClass = "bg-danger-subtle text-danger border border-danger-subtle";
         } else if (num >= 4000) {
             tier = "Comfort";
-            badgeClass = "bg-primary-subtle text-primary border border-primary-subtle";
         }
 
         if (budgetDisplay) {
-            budgetDisplay.className = `small fw-semibold text-dark`;
             budgetDisplay.textContent = `₹${num.toLocaleString("en-IN")} (${tier})`;
         }
     }
@@ -270,7 +393,7 @@ document.addEventListener("DOMContentLoaded", () => {
             itinOutput.innerHTML = `
                 <div class="text-center p-5">
                     <div class="spinner-border text-primary" role="status"></div>
-                    <p class="mt-2 text-muted fw-semibold">Building optimized day-by-day travel plan...</p>
+                    <p class="mt-2 text-muted fw-semibold">Structuring daily timeline & curated dining plan...</p>
                 </div>
             `;
 
@@ -283,7 +406,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 destination: destination,
                 num_days: numDays,
                 budget_level: budgetAmount,
-                traveller_type: travellerType
+                traveller_type: travellerType,
+                selected_places: tripCart
             };
 
             try {
@@ -324,13 +448,14 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <h6 class="fw-bold text-primary m-0 fs-5">
                                         <i class="bi bi-calendar-event me-2"></i>Day ${d.day_number}: ${d.theme}
                                     </h6>
-                                    <span class="badge bg-light text-secondary border">Full Day Route</span>
+                                    <span class="badge bg-light text-secondary border">Full Day Plan</span>
                                 </div>
 
-                                <div class="timeline ps-2">
+                                <!-- Schedule Timeline -->
+                                <div class="timeline ps-2 mb-4">
                                     <div class="mb-3 ps-3 border-start border-3 border-warning position-relative">
                                         <div class="d-flex justify-content-between align-items-start mb-1">
-                                            <strong class="text-dark"><i class="bi bi-sunrise-fill text-warning me-2"></i>Morning</strong>
+                                            <strong class="text-dark"><i class="bi bi-sunrise-fill text-warning me-2"></i>Morning Activity</strong>
                                             <span class="badge bg-light text-secondary border small">${d.morning.duration || '3 hrs'}</span>
                                         </div>
                                         <div class="fw-semibold text-primary small">${d.morning.activity}</div>
@@ -339,7 +464,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                                     <div class="mb-3 ps-3 border-start border-3 border-primary position-relative">
                                         <div class="d-flex justify-content-between align-items-start mb-1">
-                                            <strong class="text-dark"><i class="bi bi-sun-fill text-primary me-2"></i>Afternoon & Lunch</strong>
+                                            <strong class="text-dark"><i class="bi bi-sun-fill text-primary me-2"></i>Afternoon Activity</strong>
                                             <span class="badge bg-light text-secondary border small">${d.afternoon.duration || '2.5 hrs'}</span>
                                         </div>
                                         <div class="fw-semibold text-primary small">${d.afternoon.activity}</div>
@@ -348,7 +473,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                                     <div class="mb-3 ps-3 border-start border-3 border-info position-relative">
                                         <div class="d-flex justify-content-between align-items-start mb-1">
-                                            <strong class="text-dark"><i class="bi bi-moon-stars-fill text-info me-2"></i>Evening & Night</strong>
+                                            <strong class="text-dark"><i class="bi bi-moon-stars-fill text-info me-2"></i>Evening & Sunset</strong>
                                             <span class="badge bg-light text-secondary border small">${d.evening.duration || '3 hrs'}</span>
                                         </div>
                                         <div class="fw-semibold text-primary small">${d.evening.activity}</div>
@@ -356,8 +481,37 @@ document.addEventListener("DOMContentLoaded", () => {
                                     </div>
                                 </div>
 
+                                <!-- Day Food & Dining Section -->
+                                ${d.dining_plan ? `
+                                    <div class="p-3 bg-light rounded-3 border mb-3">
+                                        <h6 class="fw-bold text-dark mb-2 small text-uppercase letter-spacing-1">
+                                            <i class="bi bi-cup-hot-fill text-danger me-1"></i>Day ${d.day_number} Dining & Food Plan
+                                        </h6>
+                                        <div class="row g-2 small">
+                                            <div class="col-md-4">
+                                                <div class="p-2 bg-white rounded border">
+                                                    <span class="text-muted d-block" style="font-size: 0.75rem;">BREAKFAST</span>
+                                                    <strong class="text-dark">${d.dining_plan.breakfast || 'Traditional Breakfast'}</strong>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="p-2 bg-white rounded border">
+                                                    <span class="text-muted d-block" style="font-size: 0.75rem;">LUNCH</span>
+                                                    <strong class="text-dark">${d.dining_plan.lunch || 'Regional Specialty'}</strong>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="p-2 bg-white rounded border">
+                                                    <span class="text-muted d-block" style="font-size: 0.75rem;">DINNER / STREET FOOD</span>
+                                                    <strong class="text-dark">${d.dining_plan.dinner || 'Signature Dinner'}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ` : ''}
+
                                 ${d.pro_tip ? `
-                                    <div class="mt-2 p-2 bg-light rounded border-start border-warning border-3 small">
+                                    <div class="p-2 bg-light rounded border-start border-warning border-3 small">
                                         <strong class="text-dark"><i class="bi bi-lightbulb-fill text-warning me-1"></i>Day ${d.day_number} Tip:</strong> ${d.pro_tip}
                                     </div>
                                 ` : ''}

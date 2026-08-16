@@ -40,7 +40,7 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="itin-tab" data-bs-toggle="tab" data-bs-target="#itin-pane" type="button" role="tab">
-                    Itinerary
+                    Itinerary <span id="cartCountBadge" class="badge bg-dark ms-1 rounded-pill d-none">0</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -93,42 +93,47 @@
             <!-- 2. RECOMMENDATIONS -->
             <div class="tab-pane fade" id="recs-pane" role="tabpanel">
                 <div class="card p-4 mb-4">
-                    <h6 class="fw-semibold text-dark mb-3">Explore Recommendations</h6>
+                    <h6 class="fw-semibold text-dark mb-3">Explore & Add to Trip Cart</h6>
                     <form id="recommendationForm">
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 <label class="form-label small text-muted">Destination</label>
                                 <input type="text" id="recDestination" class="form-control" value="Hyderabad" required>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label small text-muted">Traveler Type</label>
                                 <select id="recTravellerType" class="form-select">
-                                    <option value="Solo">Solo</option>
+                                    <option value="Solo">Solo Explorer</option>
                                     <option value="Family">Family</option>
                                     <option value="Couples">Couple</option>
-                                    <option value="Friends">Friends</option>
+                                    <option value="Friends">Friends Group</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label small text-muted">Budget Tier</label>
-                                <select id="recBudget" class="form-select">
-                                    <option value="Budget">Budget</option>
-                                    <option value="Moderate" selected>Moderate</option>
-                                    <option value="Luxury">Luxury</option>
-                                </select>
+                            <div class="col-md-5">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small text-muted m-0">Max Cost Per Spot</label>
+                                    <span id="recBudgetDisplay" class="small fw-semibold text-dark">₹1,500</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="range" class="form-range" id="recBudgetSlider" min="0" max="10000" step="250" value="1500">
+                                    <div class="input-group input-group-sm" style="max-width: 110px;">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" class="form-control" id="recBudgetInput" min="0" step="250" value="1500">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small text-muted d-block">Categories</label>
                             <div class="d-flex flex-wrap gap-3">
                                 <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="History" id="cbHistory" checked><label class="form-check-label small" for="cbHistory">Heritage</label></div>
-                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Food" id="cbFood" checked><label class="form-check-label small" for="cbFood">Food</label></div>
+                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Food" id="cbFood" checked><label class="form-check-label small" for="cbFood">Food & Cafes</label></div>
                                 <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Nature" id="cbNature"><label class="form-check-label small" for="cbNature">Nature</label></div>
                                 <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Shopping" id="cbShop"><label class="form-check-label small" for="cbShop">Shopping</label></div>
                                 <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Photography" id="cbPhoto"><label class="form-check-label small" for="cbPhoto">Photography</label></div>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Find Recommendations</button>
+                        <button type="submit" class="btn btn-primary">Find Spots & Dining</button>
                     </form>
                 </div>
                 <div id="recommendationsOutput"></div>
@@ -137,20 +142,30 @@
             <!-- 3. ITINERARY BUILDER -->
             <div class="tab-pane fade" id="itin-pane" role="tabpanel">
                 <div class="card p-4 mb-4">
-                    <h6 class="fw-semibold text-dark mb-3">Generate Custom Itinerary</h6>
+                    <h6 class="fw-semibold text-dark mb-3">Generate Custom Itinerary with Food Plan</h6>
                     <form id="itineraryForm">
+                        
+                        <!-- Pinned Places in Cart -->
+                        <div id="cartTrayContainer" class="p-3 mb-3 bg-light rounded border d-none">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small fw-semibold text-dark"><i class="bi bi-cart-check text-primary me-1"></i>Selected Spots in Your Trip Cart:</span>
+                                <button type="button" id="clearCartBtn" class="btn btn-link btn-sm text-danger p-0 text-decoration-none small">Clear All</button>
+                            </div>
+                            <div id="cartBadges" class="d-flex flex-wrap gap-2"></div>
+                        </div>
+
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 <label class="form-label small text-muted">Destination</label>
                                 <input type="text" id="itinDestination" class="form-control" value="Hyderabad" required>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label small text-muted">Days</label>
+                                <label class="form-label small text-muted">Duration (Days)</label>
                                 <input type="number" id="itinDays" class="form-control" min="1" max="14" value="2" required>
                             </div>
                             <div class="col-md-5">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <label class="form-label small text-muted m-0">Budget</label>
+                                    <label class="form-label small text-muted m-0">Total Trip Budget</label>
                                     <span id="budgetDisplay" class="small fw-semibold text-dark">₹5,000</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
@@ -173,7 +188,7 @@
                                 </select>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Generate Itinerary</button>
+                        <button type="submit" class="btn btn-primary">Generate Scheduled Plan & Meals</button>
                     </form>
                 </div>
                 <div id="itineraryOutput"></div>
@@ -245,6 +260,17 @@
             </div>
 
         </div>
+    </div>
+
+    <!-- Floating Trip Cart Bar -->
+    <div id="floatingCartBar" class="position-fixed bottom-0 start-50 translate-middle-x p-3 mb-3 bg-dark text-white rounded-4 shadow-lg d-none align-items-center justify-content-between gap-3" style="z-index: 1050; width: 90%; max-width: 600px;">
+        <div class="d-flex align-items-center gap-2 overflow-hidden">
+            <span class="badge bg-primary rounded-pill px-2 py-1 fs-6" id="floatingCartCount">0</span>
+            <div class="text-truncate small" id="floatingCartItems">Places in your trip cart</div>
+        </div>
+        <button type="button" id="floatingCheckoutBtn" class="btn btn-sm btn-light fw-bold text-nowrap">
+            Build Schedule <i class="bi bi-arrow-right ms-1"></i>
+        </button>
     </div>
 
     <!-- Scripts -->

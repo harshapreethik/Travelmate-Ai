@@ -1,6 +1,6 @@
 """
 TravelMate AI — Itinerary Planning Service
-Generates structured day-by-day itineraries with timeline slots and budget estimates.
+Generates structured day-by-day itineraries with explicit food/meal planning.
 """
 
 import json
@@ -27,43 +27,55 @@ class ItineraryService:
         num_days: int = 2,
         budget_level: str = "₹5,000",
         traveller_type: str = "Solo Explorer",
+        selected_places: list = None,
         **kwargs
     ) -> dict:
+        places_prompt = ""
+        if selected_places and len(selected_places) > 0:
+            places_list_str = ", ".join(selected_places)
+            places_prompt = f"- PRIORITY MUST-VISIT SPOTS FROM USER CART: {places_list_str} (Incorporate these directly into the schedule)."
+
         prompt = f"""
-You are a travel planning engine.
-Create a realistic day-by-day itinerary for:
+You are an expert travel logistics architect and culinary planner.
+Generate an end-to-end scheduled day-by-day itinerary including explicit meal plans for:
 - Destination: {destination}
 - Duration: {num_days} Days
 - Budget: {budget_level}
 - Traveler Persona: {traveller_type}
+{places_prompt}
 
-STRICT JSON ONLY. Return ONLY valid JSON matching this schema:
+STRICT JSON OUTPUT FORMAT ONLY:
 {{
   "destination": "{destination}",
   "num_days": {num_days},
   "budget_level": "{budget_level}",
-  "estimated_daily_budget": "e.g., ₹1,000 - ₹1,500/day",
-  "transit_summary": "Practical local transit advice.",
+  "estimated_daily_budget": "e.g., ₹1,200 - ₹1,800/day",
+  "transit_summary": "1 concise sentence on best local commute mode.",
   "days": [
     {{
       "day_number": 1,
-      "theme": "Theme for Day 1",
+      "theme": "Day theme (e.g. Heritage Forts & Biryani Trails)",
       "morning": {{
-        "activity": "Main Morning Spot",
-        "description": "Short 1-2 sentence description.",
+        "activity": "Morning Landmark",
+        "description": "Exploration details, entry timing, and photo spots.",
         "duration": "3 hrs"
       }},
       "afternoon": {{
-        "activity": "Afternoon Spot / Lunch",
-        "description": "Short 1-2 sentence description.",
+        "activity": "Afternoon Spot / Activity",
+        "description": "Indoor attraction, gallery, or scenic view.",
         "duration": "2.5 hrs"
       }},
       "evening": {{
-        "activity": "Evening Spot / Dinner",
-        "description": "Short 1-2 sentence description.",
+        "activity": "Sunset Spot / Bazaar Walk",
+        "description": "Evening vibe, walking trail, or shopping street.",
         "duration": "3 hrs"
       }},
-      "pro_tip": "One useful tip for this day."
+      "dining_plan": {{
+        "breakfast": "Recommended morning breakfast dish & spot type",
+        "lunch": "Specific lunch recommendation (signature dish)",
+        "dinner": "Signature dinner spot or street food street"
+      }},
+      "pro_tip": "Practical insider tip for Day 1."
     }}
   ]
 }}
@@ -71,7 +83,7 @@ STRICT JSON ONLY. Return ONLY valid JSON matching this schema:
 
         config = types.GenerateContentConfig(
             temperature=0.2,
-            max_output_tokens=3000,
+            max_output_tokens=3800,
             response_mime_type="application/json"
         )
 
@@ -87,7 +99,7 @@ STRICT JSON ONLY. Return ONLY valid JSON matching this schema:
         for model in candidate_models:
             for attempt in range(2):
                 try:
-                    logger.info(f"Building itinerary with ({model}) [Attempt {attempt + 1}]")
+                    logger.info(f"Building custom itinerary with food plan ({model}) [Attempt {attempt + 1}]")
                     response = self.client.models.generate_content(
                         model=model,
                         contents=prompt,
@@ -103,39 +115,45 @@ STRICT JSON ONLY. Return ONLY valid JSON matching this schema:
                             self.active_model = model
                             return parsed
                 except Exception as e:
-                    logger.warning(f"Model {model} failed itinerary generation: {e}")
+                    logger.warning(f"Itinerary model {model} failed: {e}")
                     if "503" in str(e) or "UNAVAILABLE" in str(e):
                         time.sleep(1.5)
                         continue
                     break
 
-        # Reliable Fallback if API is temporarily rate-limited
+        # Fallback with complete food schedule
+        fallback_places = selected_places or ["Historic Landmarks", "Local Bazaar", "Cultural Museum"]
         return {
             "destination": destination,
             "num_days": num_days,
             "budget_level": budget_level,
             "estimated_daily_budget": f"{budget_level} allocated across {num_days} days",
-            "transit_summary": "Use local metro, shared autos, or ride-hailing apps for efficient transit.",
+            "transit_summary": "Use metro and local autos for comfortable city navigation.",
             "days": [
                 {
                     "day_number": i + 1,
-                    "theme": f"Exploring Core Highlights of {destination} (Part {i + 1})",
+                    "theme": f"Exploring {destination} Highlights (Part {i + 1})",
                     "morning": {
-                        "activity": f"Major Cultural Landmarks in {destination}",
-                        "description": "Start early to beat the crowd and explore the premier historic sites.",
+                        "activity": fallback_places[i % len(fallback_places)],
+                        "description": "Start early to explore before peak heat and avoid crowds.",
                         "duration": "3 hrs"
                     },
                     "afternoon": {
-                        "activity": "Authentic Regional Cuisine & Museum Tour",
-                        "description": "Sample signature local dishes followed by a tour of local galleries.",
+                        "activity": "Cultural Exploration & Galleries",
+                        "description": "Explore regional art collections and local craft workshops.",
                         "duration": "2.5 hrs"
                     },
                     "evening": {
-                        "activity": "Sunset Promenade & Traditional Bazaars",
-                        "description": "Walk through the bustling evening markets and sample street delicacies.",
+                        "activity": "Sunset Point & Night Market",
+                        "description": "Stroll the illuminated markets and souvenir stalls.",
                         "duration": "3 hrs"
                     },
-                    "pro_tip": "Pre-book monument tickets online where available to bypass entry queues."
+                    "dining_plan": {
+                        "breakfast": "Traditional local breakfast (e.g. Idli/Dosa or regional tea & snacks)",
+                        "lunch": "Signature thali or regional specialty platter",
+                        "dinner": "Authentic dinner at an established heritage restaurant"
+                    },
+                    "pro_tip": "Carry cash for local street food vendors and smaller kiosks."
                 }
                 for i in range(num_days)
             ]
