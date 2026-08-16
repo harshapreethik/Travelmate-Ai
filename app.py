@@ -78,13 +78,15 @@ def get_recommendations_endpoint():
         interests = data.get("interests", [])
         budget_level = data.get("budget_level", "Moderate")
         traveller_type = data.get("traveller_type", "Solo")
+        custom_interests = data.get("custom_interests", "")
 
         rec_service = get_recommendation_service()
         results = rec_service.get_recommendations(
             destination=destination,
             interests=interests,
             budget_level=budget_level,
-            traveller_type=traveller_type
+            traveller_type=traveller_type,
+            custom_interests=custom_interests
         )
 
         return jsonify({"status": "success", "data": results}), 200
@@ -100,15 +102,19 @@ def generate_itinerary_endpoint():
         data = request.get_json() or {}
         destination = data.get("destination", "Hyderabad")
         num_days = int(data.get("num_days", 2))
-        budget_level = data.get("budget_level", "Moderate")
-        traveller_type = data.get("traveller_type", "Solo")
+        budget_level = data.get("budget_level", "₹5,000")
+        traveller_type = data.get("traveller_type", "Solo Explorer")
+        selected_places = data.get("selected_places", [])
+        custom_schedule = data.get("custom_schedule", "")
 
         itinerary_svc = get_itinerary_service()
         result = itinerary_svc.generate_itinerary(
             destination=destination,
             num_days=num_days,
             budget_level=budget_level,
-            traveller_type=traveller_type
+            traveller_type=traveller_type,
+            selected_places=selected_places,
+            custom_schedule=custom_schedule
         )
 
         return jsonify({"status": "success", "data": result}), 200

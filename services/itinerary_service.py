@@ -1,6 +1,6 @@
 """
 TravelMate AI — Itinerary Planning Service
-Generates structured day-by-day itineraries with explicit food/meal planning.
+Generates structured day-by-day itineraries with explicit food/meal planning and custom routine integration.
 """
 
 import json
@@ -28,23 +28,28 @@ class ItineraryService:
         budget_level: str = "₹5,000",
         traveller_type: str = "Solo Explorer",
         selected_places: list = None,
+        custom_schedule: str = "",
         **kwargs
     ) -> dict:
-        places_prompt = ""
+        extra_prompts = []
         if selected_places and len(selected_places) > 0:
             places_list_str = ", ".join(selected_places)
-            places_prompt = f"- PRIORITY MUST-VISIT SPOTS FROM USER CART: {places_list_str} (Incorporate these directly into the schedule)."
+            extra_prompts.append(f"- MUST-VISIT PLACES FROM USER DISCOVERY: {places_list_str} (Incorporate these directly into the daily schedule).")
+        if custom_schedule:
+            extra_prompts.append(f"- USER CUSTOM ROUTINES & EVENTS TO INTEGRATE: {custom_schedule} (e.g., gym sessions, live shows, night cafes).")
+
+        extras_str = "\n".join(extra_prompts)
 
         prompt = f"""
 You are an expert travel logistics architect and culinary planner.
-Generate an end-to-end scheduled day-by-day itinerary including explicit meal plans for:
+Generate a cohesive, scheduled day-by-day itinerary including explicit meal plans for:
 - Destination: {destination}
 - Duration: {num_days} Days
 - Budget: {budget_level}
 - Traveler Persona: {traveller_type}
-{places_prompt}
+{extras_str}
 
-STRICT JSON OUTPUT FORMAT ONLY:
+STRICT JSON OUTPUT FORMAT ONLY (no markdown code blocks, no intro text):
 {{
   "destination": "{destination}",
   "num_days": {num_days},
@@ -56,8 +61,8 @@ STRICT JSON OUTPUT FORMAT ONLY:
       "day_number": 1,
       "theme": "Day theme (e.g. Heritage Forts & Biryani Trails)",
       "morning": {{
-        "activity": "Morning Landmark",
-        "description": "Exploration details, entry timing, and photo spots.",
+        "activity": "Morning Landmark or Routine",
+        "description": "Exploration details, timing, or workout/routine specifics.",
         "duration": "3 hrs"
       }},
       "afternoon": {{
@@ -66,8 +71,8 @@ STRICT JSON OUTPUT FORMAT ONLY:
         "duration": "2.5 hrs"
       }},
       "evening": {{
-        "activity": "Sunset Spot / Bazaar Walk",
-        "description": "Evening vibe, walking trail, or shopping street.",
+        "activity": "Evening Spot / Event / Bazaar Walk",
+        "description": "Evening vibe, live event, comedy show, or shopping street.",
         "duration": "3 hrs"
       }},
       "dining_plan": {{
@@ -107,7 +112,7 @@ STRICT JSON OUTPUT FORMAT ONLY:
                     )
                     if response and response.text:
                         raw = response.text.strip()
-                        raw = re.sub(r"^```json\s*", "", raw)
+                        raw = re.sub(r"^```(?:json)?\s*", "", raw)
                         raw = re.sub(r"\s*```$", "", raw)
 
                         parsed = json.loads(raw.strip())
@@ -121,7 +126,7 @@ STRICT JSON OUTPUT FORMAT ONLY:
                         continue
                     break
 
-        # Fallback with complete food schedule
+        # Fallback with complete food schedule and routine integration
         fallback_places = selected_places or ["Historic Landmarks", "Local Bazaar", "Cultural Museum"]
         return {
             "destination": destination,
@@ -145,7 +150,7 @@ STRICT JSON OUTPUT FORMAT ONLY:
                     },
                     "evening": {
                         "activity": "Sunset Point & Night Market",
-                        "description": "Stroll the illuminated markets and souvenir stalls.",
+                        "description": "Stroll the illuminated markets and sample local delicacies.",
                         "duration": "3 hrs"
                     },
                     "dining_plan": {

@@ -5,6 +5,7 @@ Generates structured venue matrices formatted for consumer travel UI.
 
 import json
 import logging
+import re
 import time
 from google import genai
 from google.genai import types
@@ -25,25 +26,28 @@ class RecommendationService:
         destination: str,
         interests: list,
         budget_level: str = "Moderate",
-        traveller_type: str = "Solo"
+        traveller_type: str = "Solo",
+        custom_interests: str = ""
     ) -> dict:
-        interests_str = ", ".join(interests) if interests else "Sightseeing, Local Culture, Food"
+        combined_interests = ", ".join(interests) if interests else "Sightseeing, Local Culture, Food"
+        if custom_interests:
+            combined_interests += f" | Specific User Custom Interests: {custom_interests}"
 
         prompt = f"""
 You are a live travel directory database engine.
 Generate exactly 4 to 6 top spot recommendations for:
 - City/Destination: {destination}
 - Traveler Type: {traveller_type}
-- Budget Level: {budget_level}
-- Selected Categories: {interests_str}
+- Budget Tier: {budget_level}
+- Selected Categories & Custom Activities: {combined_interests}
 
 STRICT JSON OUTPUT ONLY (no markdown code blocks, no intro text):
 {{
-  "destination_summary": "{destination} • {traveller_type} • {budget_level} Budget",
+  "destination_summary": "{destination} • {traveller_type}",
   "recommendations": [
     {{
       "name": "Exact Name of Place or Food Joint",
-      "category": "Heritage / Food & Cafe / Nature / Bazaar / Adventure",
+      "category": "Heritage / Food & Cafe / Nature / Fitness / Event / Shopping",
       "rating": 4.8,
       "reviews_count": "12.4k",
       "match_score": 96,
@@ -59,7 +63,7 @@ STRICT JSON OUTPUT ONLY (no markdown code blocks, no intro text):
 
         config = types.GenerateContentConfig(
             temperature=0.2,
-            max_output_tokens=2200,
+            max_output_tokens=2500,
             response_mime_type="application/json"
         )
 
@@ -83,14 +87,13 @@ STRICT JSON OUTPUT ONLY (no markdown code blocks, no intro text):
                     )
                     if response and response.text:
                         raw_json = response.text.strip()
-                        if raw_json.startswith("```json"):
-                            raw_json = raw_json[7:]
-                        if raw_json.endswith("```"):
-                            raw_json = raw_json[:-3]
+                        raw_json = re.sub(r"^```(?:json)?\s*", "", raw_json)
+                        raw_json = re.sub(r"\s*```$", "", raw_json)
 
                         parsed_data = json.loads(raw_json.strip())
-                        self.active_model = model
-                        return parsed_data
+                        if "recommendations" in parsed_data:
+                            self.active_model = model
+                            return parsed_data
                 except Exception as e:
                     logger.warning(f"Failed on {model}: {e}")
                     if "503" in str(e) or "UNAVAILABLE" in str(e):

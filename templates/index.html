@@ -19,7 +19,7 @@
                 <i class="bi bi-compass-fill text-dark me-2 fs-5"></i>
                 <span>TravelMate AI</span>
             </a>
-            <span class="text-secondary small">Assistant</span>
+            <span class="text-secondary small">Companion</span>
         </div>
     </nav>
 
@@ -35,7 +35,7 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="recs-tab" data-bs-toggle="tab" data-bs-target="#recs-pane" type="button" role="tab">
-                    Recommendations
+                    Places
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -90,10 +90,10 @@
                 </div>
             </div>
 
-            <!-- 2. RECOMMENDATIONS -->
+            <!-- 2. PLACES / RECOMMENDATIONS -->
             <div class="tab-pane fade" id="recs-pane" role="tabpanel">
                 <div class="card p-4 mb-4">
-                    <h6 class="fw-semibold text-dark mb-3">Explore & Add to Trip Cart</h6>
+                    <h6 class="fw-semibold text-dark mb-3">Discover Places</h6>
                     <form id="recommendationForm">
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
@@ -123,6 +123,13 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Custom Free-Text Activities & Preferences -->
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Specific Preferences & Custom Activities</label>
+                            <input type="text" id="recCustomInterests" class="form-control" placeholder="e.g., Gym / workouts, standup comedy shows, live concerts, midnight cafes">
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label small text-muted d-block">Categories</label>
                             <div class="d-flex flex-wrap gap-3">
@@ -130,10 +137,10 @@
                                 <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Food" id="cbFood" checked><label class="form-check-label small" for="cbFood">Food & Cafes</label></div>
                                 <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Nature" id="cbNature"><label class="form-check-label small" for="cbNature">Nature</label></div>
                                 <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Shopping" id="cbShop"><label class="form-check-label small" for="cbShop">Shopping</label></div>
-                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Photography" id="cbPhoto"><label class="form-check-label small" for="cbPhoto">Photography</label></div>
+                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Nightlife & Entertainment" id="cbEvents"><label class="form-check-label small" for="cbEvents">Shows & Events</label></div>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Find Spots & Dining</button>
+                        <button type="submit" class="btn btn-primary">Find Places</button>
                     </form>
                 </div>
                 <div id="recommendationsOutput"></div>
@@ -142,13 +149,13 @@
             <!-- 3. ITINERARY BUILDER -->
             <div class="tab-pane fade" id="itin-pane" role="tabpanel">
                 <div class="card p-4 mb-4">
-                    <h6 class="fw-semibold text-dark mb-3">Generate Custom Itinerary with Food Plan</h6>
+                    <h6 class="fw-semibold text-dark mb-3">Itinerary Planner</h6>
                     <form id="itineraryForm">
                         
                         <!-- Pinned Places in Cart -->
                         <div id="cartTrayContainer" class="p-3 mb-3 bg-light rounded border d-none">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="small fw-semibold text-dark"><i class="bi bi-cart-check text-primary me-1"></i>Selected Spots in Your Trip Cart:</span>
+                                <span class="small fw-semibold text-dark"><i class="bi bi-pin-map text-primary me-1"></i>Places added from discovery:</span>
                                 <button type="button" id="clearCartBtn" class="btn btn-link btn-sm text-danger p-0 text-decoration-none small">Clear All</button>
                             </div>
                             <div id="cartBadges" class="d-flex flex-wrap gap-2"></div>
@@ -177,8 +184,9 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="row g-3 mb-3">
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <label class="form-label small text-muted">Travel Style</label>
                                 <select id="itinStyle" class="form-select">
                                     <option value="Solo">Solo Explorer</option>
@@ -187,8 +195,12 @@
                                     <option value="Couples">Couple</option>
                                 </select>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Daily Routine / Events (Optional)</label>
+                                <input type="text" id="itinCustomSchedule" class="form-control" placeholder="e.g., Include 7 AM Gym, late night concerts">
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Generate Scheduled Plan & Meals</button>
+                        <button type="submit" class="btn btn-primary">Generate Schedule</button>
                     </form>
                 </div>
                 <div id="itineraryOutput"></div>
@@ -262,15 +274,20 @@
         </div>
     </div>
 
-    <!-- Floating Trip Cart Bar -->
-    <div id="floatingCartBar" class="position-fixed bottom-0 start-50 translate-middle-x p-3 mb-3 bg-dark text-white rounded-4 shadow-lg d-none align-items-center justify-content-between gap-3" style="z-index: 1050; width: 90%; max-width: 600px;">
+    <!-- Floating Trip Cart Bar (Scoped only to Places discovery) -->
+    <div id="floatingCartBar" class="position-fixed bottom-0 start-50 translate-middle-x p-3 mb-3 bg-dark text-white rounded-4 shadow-lg d-none align-items-center justify-content-between gap-3" style="z-index: 1050; width: 90%; max-width: 580px;">
         <div class="d-flex align-items-center gap-2 overflow-hidden">
             <span class="badge bg-primary rounded-pill px-2 py-1 fs-6" id="floatingCartCount">0</span>
-            <div class="text-truncate small" id="floatingCartItems">Places in your trip cart</div>
+            <div class="text-truncate small text-white-50" id="floatingCartItems">Places selected</div>
         </div>
-        <button type="button" id="floatingCheckoutBtn" class="btn btn-sm btn-light fw-bold text-nowrap">
-            Build Schedule <i class="bi bi-arrow-right ms-1"></i>
-        </button>
+        <div class="d-flex gap-2">
+            <button type="button" id="floatingDismissBtn" class="btn btn-sm btn-outline-light px-2" title="Dismiss bar">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <button type="button" id="floatingCheckoutBtn" class="btn btn-sm btn-light fw-semibold text-nowrap">
+                Build Schedule <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+        </div>
     </div>
 
     <!-- Scripts -->
