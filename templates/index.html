@@ -3,59 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TravelMate AI — Multilingual Tourism Companion</title>
+    <title>TravelMate AI</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="bg-light">
+<body>
 
-    <!-- Top Navigation Bar -->
-    <nav class="navbar navbar-dark bg-dark px-3 py-2 sticky-top shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
-                <i class="bi bi-compass-fill text-primary me-2 fs-4"></i>
+    <!-- Header Navigation -->
+    <nav class="navbar navbar-expand-lg px-4 py-3 sticky-top">
+        <div class="container-fluid max-w-screen-lg mx-auto p-0" style="max-width: 900px;">
+            <a class="navbar-brand fw-semibold d-flex align-items-center" href="#">
+                <i class="bi bi-compass-fill text-dark me-2 fs-5"></i>
                 <span>TravelMate AI</span>
             </a>
-            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                <i class="bi bi-globe me-1"></i> Auto-Detecting Any Language
-            </span>
+            <span class="text-secondary small">Assistant</span>
         </div>
     </nav>
 
-    <!-- Main Navigation Tabs -->
-    <div class="container my-4">
-        <ul class="nav nav-pills nav-fill bg-white p-2 rounded shadow-sm mb-4" id="travelTab" role="tablist">
+    <!-- Main Container -->
+    <div class="container my-4" style="max-width: 900px;">
+        
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-pills nav-fill mb-4" id="travelTab" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active fw-semibold" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pane" type="button" role="tab">
-                    <i class="bi bi-chat-dots me-1"></i> AI Assistant
+                <button class="nav-link active" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pane" type="button" role="tab">
+                    Chat
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link fw-semibold" id="recs-tab" data-bs-toggle="tab" data-bs-target="#recs-pane" type="button" role="tab">
-                    <i class="bi bi-star me-1"></i> Recommendations
+                <button class="nav-link" id="recs-tab" data-bs-toggle="tab" data-bs-target="#recs-pane" type="button" role="tab">
+                    Recommendations
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link fw-semibold" id="itin-tab" data-bs-toggle="tab" data-bs-target="#itin-pane" type="button" role="tab">
-                    <i class="bi bi-calendar-week me-1"></i> Itinerary Builder
+                <button class="nav-link" id="itin-tab" data-bs-toggle="tab" data-bs-target="#itin-pane" type="button" role="tab">
+                    Itinerary
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link fw-semibold" id="vision-tab" data-bs-toggle="tab" data-bs-target="#vision-pane" type="button" role="tab">
-                    <i class="bi bi-camera me-1"></i> Vision / Menu OCR
+                <button class="nav-link" id="vision-tab" data-bs-toggle="tab" data-bs-target="#vision-pane" type="button" role="tab">
+                    Vision OCR
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link fw-semibold" id="trans-tab" data-bs-toggle="tab" data-bs-target="#trans-pane" type="button" role="tab">
-                    <i class="bi bi-translate me-1"></i> Translator
+                <button class="nav-link" id="trans-tab" data-bs-toggle="tab" data-bs-target="#trans-pane" type="button" role="tab">
+                    Translator
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link fw-semibold" id="emergency-tab" data-bs-toggle="tab" data-bs-target="#emergency-pane" type="button" role="tab">
-                    <i class="bi bi-shield-check me-1"></i> Emergency Directory
+                <button class="nav-link" id="emergency-tab" data-bs-toggle="tab" data-bs-target="#emergency-pane" type="button" role="tab">
+                    Emergency
                 </button>
             </li>
         </ul>
@@ -63,193 +63,185 @@
         <!-- Tab Content Panes -->
         <div class="tab-content" id="travelTabContent">
             
-            <!-- 1. AI CHAT ASSISTANT -->
+            <!-- 1. CHAT ASSISTANT -->
             <div class="tab-pane fade show active" id="chat-pane" role="tabpanel">
-                <div class="card shadow-sm border-0 mx-auto" style="max-width: 900px;">
-                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold text-primary m-0">
-                            <i class="bi bi-chat-dots-fill me-2"></i>Multilingual Travel Assistant
-                        </h5>
-                        <span class="text-muted small">Auto-detects any script or language</span>
+                <div class="card border-0 p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-semibold text-dark m-0">Travel Assistant</h6>
                     </div>
-                    <div class="card-body p-3">
-                        <div id="chatWindow" class="chat-window border rounded p-3 mb-3 bg-light" style="height: 420px; overflow-y: auto;">
-                            <div class="chat-bubble bot">
-                                Hello! Ask me anything in any language or script (English, తెలుగు, Tanglish, हिन्दी, Hinglish, etc.) and I will match your style!
-                            </div>
+                    
+                    <div id="chatWindow" class="chat-window p-3 mb-3" style="height: 420px; overflow-y: auto;">
+                        <div class="chat-bubble bot">
+                            How can I help you plan or navigate your journey today?
                         </div>
-                        <form id="chatForm" class="d-flex gap-2">
-                            <input type="text" id="chatInput" class="form-control" placeholder="Ask in any language (e.g. 'hyd lo best spots cheppu', 'वाराणसी में क्या देखें', 'Top spots in Paris')..." required>
-                            <button type="submit" class="btn btn-primary px-4"><i class="bi bi-send-fill"></i></button>
-                        </form>
                     </div>
+
+                    <!-- Suggestion Prompts -->
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button type="button" class="suggestion-pill" data-prompt="Top hidden spots to visit in Hyderabad">Top spots in Hyderabad</button>
+                        <button type="button" class="suggestion-pill" data-prompt="Must-try local dishes and best eateries">Must-try food guide</button>
+                        <button type="button" class="suggestion-pill" data-prompt="Public transit options from airport to city center">Airport transit advice</button>
+                    </div>
+
+                    <form id="chatForm" class="d-flex gap-2">
+                        <input type="text" id="chatInput" class="form-control" placeholder="Ask a question or request travel advice..." required autocomplete="off">
+                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-arrow-up"></i></button>
+                    </form>
                 </div>
             </div>
 
-            <!-- 2. RECOMMENDATIONS ENGINE -->
+            <!-- 2. RECOMMENDATIONS -->
             <div class="tab-pane fade" id="recs-pane" role="tabpanel">
-                <div class="card shadow-sm border-0 p-4 mx-auto mb-4" style="max-width: 900px;">
-                    <h5 class="fw-bold text-primary mb-3">
-                        <i class="bi bi-star-fill me-2"></i>Personalized Recommendation Engine
-                    </h5>
+                <div class="card p-4 mb-4">
+                    <h6 class="fw-semibold text-dark mb-3">Explore Recommendations</h6>
                     <form id="recommendationForm">
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Destination City</label>
+                                <label class="form-label small text-muted">Destination</label>
                                 <input type="text" id="recDestination" class="form-control" value="Hyderabad" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Traveller Type</label>
+                                <label class="form-label small text-muted">Traveler Type</label>
                                 <select id="recTravellerType" class="form-select">
-                                    <option value="Solo">Solo Explorer</option>
+                                    <option value="Solo">Solo</option>
                                     <option value="Family">Family</option>
                                     <option value="Couples">Couple</option>
-                                    <option value="Friends">Friends Group</option>
+                                    <option value="Friends">Friends</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Budget Level</label>
+                                <label class="form-label small text-muted">Budget Tier</label>
                                 <select id="recBudget" class="form-select">
-                                    <option value="Budget">Budget Friendly</option>
-                                    <option value="Moderate" selected>Moderate</option>
-                                    <option value="Luxury">Luxury</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold d-block">Interests & Vibes</label>
-                            <div class="d-flex flex-wrap gap-3">
-                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="History" id="cbHistory" checked><label class="form-check-label" for="cbHistory">History & Heritage</label></div>
-                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Food" id="cbFood" checked><label class="form-check-label" for="cbFood">Food & Cuisine</label></div>
-                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Nature" id="cbNature"><label class="form-check-label" for="cbNature">Nature & Lakes</label></div>
-                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Shopping" id="cbShop"><label class="form-check-label" for="cbShop">Bazaars & Shopping</label></div>
-                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Photography" id="cbPhoto"><label class="form-check-label" for="cbPhoto">Photography</label></div>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-search me-1"></i> Get Recommendations</button>
-                    </form>
-                </div>
-                <div id="recommendationsOutput" class="mx-auto" style="max-width: 900px;"></div>
-            </div>
-
-            <!-- 3. ITINERARY BUILDER -->
-            <div class="tab-pane fade" id="itin-pane" role="tabpanel">
-                <div class="card shadow-sm border-0 p-4 mx-auto mb-4" style="max-width: 900px;">
-                    <h5 class="fw-bold text-primary mb-3">
-                        <i class="bi bi-calendar2-range-fill me-2"></i>Day-by-Day AI Itinerary Builder
-                    </h5>
-                    <form id="itineraryForm">
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Destination</label>
-                                <input type="text" id="itinDestination" class="form-control" value="Hyderabad" required>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label fw-semibold">Duration (Days)</label>
-                                <input type="number" id="itinDays" class="form-control" min="1" max="14" value="2" required>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold">Budget Level</label>
-                                <select id="itinBudget" class="form-select">
                                     <option value="Budget">Budget</option>
                                     <option value="Moderate" selected>Moderate</option>
                                     <option value="Luxury">Luxury</option>
                                 </select>
                             </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted d-block">Categories</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="History" id="cbHistory" checked><label class="form-check-label small" for="cbHistory">Heritage</label></div>
+                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Food" id="cbFood" checked><label class="form-check-label small" for="cbFood">Food</label></div>
+                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Nature" id="cbNature"><label class="form-check-label small" for="cbNature">Nature</label></div>
+                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Shopping" id="cbShop"><label class="form-check-label small" for="cbShop">Shopping</label></div>
+                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Photography" id="cbPhoto"><label class="form-check-label small" for="cbPhoto">Photography</label></div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Find Recommendations</button>
+                    </form>
+                </div>
+                <div id="recommendationsOutput"></div>
+            </div>
+
+            <!-- 3. ITINERARY BUILDER -->
+            <div class="tab-pane fade" id="itin-pane" role="tabpanel">
+                <div class="card p-4 mb-4">
+                    <h6 class="fw-semibold text-dark mb-3">Generate Custom Itinerary</h6>
+                    <form id="itineraryForm">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Destination</label>
+                                <input type="text" id="itinDestination" class="form-control" value="Hyderabad" required>
+                            </div>
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold">Travel Style</label>
+                                <label class="form-label small text-muted">Days</label>
+                                <input type="number" id="itinDays" class="form-control" min="1" max="14" value="2" required>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small text-muted m-0">Budget</label>
+                                    <span id="budgetDisplay" class="small fw-semibold text-dark">₹5,000</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="range" class="form-range" id="itinBudgetSlider" min="1000" max="50000" step="500" value="5000">
+                                    <div class="input-group input-group-sm" style="max-width: 110px;">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" class="form-control" id="itinBudgetInput" min="500" step="500" value="5000">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label small text-muted">Travel Style</label>
                                 <select id="itinStyle" class="form-select">
                                     <option value="Solo">Solo Explorer</option>
                                     <option value="Family">Family Leisure</option>
                                     <option value="Adventure">Fast-Paced Adventure</option>
+                                    <option value="Couples">Couple</option>
                                 </select>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-magic me-1"></i> Generate Plan</button>
+                        <button type="submit" class="btn btn-primary">Generate Itinerary</button>
                     </form>
                 </div>
-                <div id="itineraryOutput" class="mx-auto" style="max-width: 900px;"></div>
+                <div id="itineraryOutput"></div>
             </div>
 
-            <!-- 4. VISION / MENU OCR PANE -->
+            <!-- 4. VISION / MENU OCR -->
             <div class="tab-pane fade" id="vision-pane" role="tabpanel">
-                <div class="card shadow-sm border-0 p-4 mx-auto mb-4" style="max-width: 900px;">
-                    <h5 class="fw-bold text-primary mb-3">
-                        <i class="bi bi-camera-fill me-2"></i>Signboard & Menu Multimodal Vision
-                    </h5>
+                <div class="card p-4 mb-4">
+                    <h6 class="fw-semibold text-dark mb-3">Visual Analysis & OCR</h6>
                     <form id="visionForm">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Upload Photo (Menu, Street Sign, Landmark Plaque)</label>
+                            <label class="form-label small text-muted">Upload Signboard, Menu, or Landmark Image</label>
                             <input type="file" id="visionFile" class="form-control" accept="image/*" required>
                         </div>
                         <div class="mb-3 text-center" id="imagePreviewContainer" style="display: none;">
-                            <img id="imagePreview" src="" alt="Preview" class="img-thumbnail rounded shadow-sm" style="max-height: 250px;">
+                            <img id="imagePreview" src="" alt="Preview" class="img-thumbnail rounded" style="max-height: 240px;">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Ask Anything About This Photo (Optional)</label>
-                            <input type="text" id="visionQuery" class="form-control" placeholder="Ask in any language: 'eetlo vegetarian evi?', 'दी गई जानकारी क्या है?', 'Translate this sign'">
+                            <label class="form-label small text-muted">Specific Instructions (Optional)</label>
+                            <input type="text" id="visionQuery" class="form-control" placeholder="e.g., Identify vegetarian options or translate key text">
                         </div>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-primary px-4"><i class="bi bi-cpu me-1"></i> Analyze Image</button>
-                        </div>
+                        <button type="submit" class="btn btn-primary">Analyze Image</button>
                     </form>
                 </div>
-                <div id="visionOutput" class="mx-auto" style="max-width: 900px;"></div>
+                <div id="visionOutput"></div>
             </div>
 
-            <!-- 5. REAL-TIME TRANSLATOR -->
+            <!-- 5. TRANSLATOR -->
             <div class="tab-pane fade" id="trans-pane" role="tabpanel">
-                <div class="card shadow-sm border-0 p-4 mx-auto mb-4" style="max-width: 900px;">
-                    <h5 class="fw-bold text-primary mb-3">
-                        <i class="bi bi-translate me-2"></i>Smart Travel Phrase Translator
-                    </h5>
+                <div class="card p-4 mb-4">
+                    <h6 class="fw-semibold text-dark mb-3">Travel Translator</h6>
                     
-                    <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold text-uppercase">1-Tap Essential Travel Phrases:</label>
-                        <div class="d-flex flex-wrap gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary quick-phrase-chip" data-phrase="Where is the nearest hospital or pharmacy?">🏥 Pharmacy / Hospital</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary quick-phrase-chip" data-phrase="How much does this cost? Can you give a discount?">💰 Price / Bargain</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary quick-phrase-chip" data-phrase="I am strictly vegetarian. Does this dish contain eggs or meat?">🥗 Pure Vegetarian Check</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary quick-phrase-chip" data-phrase="Please turn on the meter, or how much to the airport?">🚖 Taxi / Auto Fare</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary quick-phrase-chip" data-phrase="Help me please, I am lost. Where is the train station?">🚉 Lost / Station</button>
-                        </div>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Where is the nearest hospital or medical clinic?">Medical Assistance</button>
+                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="How much is this, and can you provide a receipt?">Price & Receipt</button>
+                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Is this food strictly vegetarian with no eggs?">Vegetarian Check</button>
+                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Please use the meter for the fare to the airport.">Taxi Fare</button>
                     </div>
 
                     <form id="translateForm">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Type Phrase (Any Language)</label>
                             <div class="input-group">
-                                <input type="text" id="transText" class="form-control" placeholder="Type or speak a phrase..." required>
-                                <button type="button" id="transMicBtn" class="btn btn-outline-secondary" title="Speech to Text"><i class="bi bi-mic-fill"></i></button>
+                                <input type="text" id="transText" class="form-control" placeholder="Enter phrase to translate..." required>
+                                <button type="button" id="transMicBtn" class="btn btn-outline-secondary" title="Speech to text"><i class="bi bi-mic"></i></button>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-chat-left-quote me-1"></i> Translate</button>
+                        <button type="submit" class="btn btn-primary">Translate</button>
                     </form>
                 </div>
-                <div id="translateOutput" class="mx-auto" style="max-width: 900px;"></div>
+                <div id="translateOutput"></div>
             </div>
 
             <!-- 6. EMERGENCY DIRECTORY -->
             <div class="tab-pane fade" id="emergency-pane" role="tabpanel">
-                <div class="card shadow-sm border-0 p-4 mx-auto mb-4" style="max-width: 900px;">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-danger m-0">
-                            <i class="bi bi-shield-fill-exclamation me-2"></i>Verified Emergency Support Hub
-                        </h5>
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Instant / Zero-Latency</span>
-                    </div>
-                    <div class="row g-3 mb-2">
+                <div class="card p-4 mb-4">
+                    <h6 class="fw-semibold text-dark mb-3">Emergency Helplines</h6>
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Country</label>
+                            <label class="form-label small text-muted">Country</label>
                             <select id="emCountrySelect" class="form-select"></select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">State / Region</label>
+                            <label class="form-label small text-muted">State / Region</label>
                             <select id="emStateSelect" class="form-select"></select>
                         </div>
                     </div>
                 </div>
-                <div id="emergencyOutput" class="mx-auto" style="max-width: 900px;"></div>
+                <div id="emergencyOutput"></div>
             </div>
 
         </div>
