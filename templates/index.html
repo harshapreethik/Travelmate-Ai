@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Module Selector Navigation Tabs -->
+<ul class="nav nav-pills justify-content-center mb-4 flex-nowrap overflow-auto py-2" id="moduleTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="chat-tab" data-bs-toggle="pill" data-bs-target="#chat-pane" type="button" role="tab">
+            <i class="bi bi-chat-dots-fill me-1"></i> <span data-i18n="tab_chat">AI Assistant</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="recommendations-tab" data-bs-toggle="pill" data-bs-target="#recommendations-pane" type="button" role="tab">
+            <i class="bi bi-star-fill me-1"></i> <span data-i18n="tab_recommendations">Recommendations</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="itinerary-tab" data-bs-toggle="pill" data-bs-target="#itinerary-pane" type="button" role="tab">
+            <i class="bi bi-calendar3 me-1"></i> <span data-i18n="tab_itinerary">Itinerary Builder</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="vision-tab" data-bs-toggle="pill" data-bs-target="#vision-pane" type="button" role="tab">
+            <i class="bi bi-camera-fill me-1"></i> <span data-i18n="tab_vision">Vision / Menu OCR</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="translate-tab" data-bs-toggle="pill" data-bs-target="#translate-pane" type="button" role="tab">
+            <i class="bi bi-translate me-1"></i> <span data-i18n="tab_translate">Translator</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="emergency-tab" data-bs-toggle="pill" data-bs-target="#emergency-pane" type="button" role="tab">
+            <i class="bi bi-shield-exclamation me-1"></i> <span data-i18n="tab_emergency">Emergency Directory</span>
+        </button>
+    </li>
+</ul>
+
+<!-- Tab Content Panes -->
+<div class="tab-content" id="moduleTabContent">
+
+    <!-- 1. CHAT ASSISTANT PANE -->
+    <div class="tab-pane fade show active" id="chat-pane" role="tabpanel">
+        <div class="card feature-card p-3 mx-auto" style="max-width: 800px;">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                <h5 class="m-0 fw-bold text-primary"><i class="bi bi-chat-dots me-2"></i><span data-i18n="chat_title">Multilingual Travel Assistant</span></h5>
+                <span class="badge bg-primary-subtle text-primary border"><i class="bi bi-globe2 me-1"></i><span data-i18n="chat_badge">Worldwide Guide</span></span>
+            </div>
+            <div class="chat-window mb-3" id="chatWindow">
+                <div class="chat-bubble bot" data-i18n="chat_welcome">
+                    Hello! I am TravelMate AI. Ask me anything about destinations, places to visit, local cuisine, transport, or culture worldwide!
+                </div>
+            </div>
+            <form id="chatForm" class="d-flex gap-2">
+                <input type="text" id="chatInput" class="form-control" data-i18n-placeholder="chat_placeholder" placeholder="Ask anything (e.g., Top spots in France, Tokyo street food, Rome transit)..." required>
+                <button type="submit" class="btn btn-primary px-4"><i class="bi bi-send-fill"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. RECOMMENDATIONS PANE -->
+    <div class="tab-pane fade" id="recommendations-pane" role="tabpanel">
+        <div class="card feature-card p-4 mx-auto mb-4" style="max-width: 800px;">
+            <h5 class="fw-bold text-primary mb-3"><i class="bi bi-sliders me-2"></i><span data-i18n="rec_title">Personalized Recommendation Engine</span></h5>
+            <form id="recommendationForm" class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" data-i18n="rec_dest_label">Destination</label>
+                    <input type="text" id="recDestination" class="form-control" value="Hyderabad" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" data-i18n="rec_traveller_label">Traveller Type</label>
+                    <select id="recTravellerType" class="form-select">
+                        <option value="Solo">Solo Traveller</option>
+                        <option value="Couple">Couple</option>
+                        <option value="Family">Family</option>
+                        <option value="Friends">Friends Group</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" data-i18n="rec_budget_label">Budget Level</label>
+                    <select id="recBudget" class="form-select">
+                        <option value="Budget">Budget Friendly</option>
+                        <option value="Moderate" selected>Moderate</option>
+                        <option value="Premium">Premium / Luxury</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" data-i18n="rec_interests_label">Interests</label>
+                    <div class="d-flex flex-wrap gap-2 pt-1">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input rec-interest" type="checkbox" value="History" checked> History
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input rec-interest" type="checkbox" value="Food" checked> Food
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input rec-interest" type="checkbox" value="Nature"> Nature
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input rec-interest" type="checkbox" value="Shopping"> Shopping
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary px-4"><i class="bi bi-search me-1"></i> <span data-i18n="rec_btn">Get Recommendations</span></button>
+                </div>
+            </form>
+        </div>
+        <div id="recommendationsOutput" class="mx-auto" style="max-width: 800px;"></div>
+    </div>
+
+    <!-- 3. ITINERARY BUILDER PANE -->
+    <div class="tab-pane fade" id="itinerary-pane" role="tabpanel">
+        <div class="card feature-card p-4 mx-auto mb-4" style="max-width: 800px;">
+            <h5 class="fw-bold text-primary mb-3"><i class="bi bi-calendar-event me-2"></i><span data-i18n="itin_title">Day-by-Day AI Itinerary Builder</span></h5>
+            <form id="itineraryForm" class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" data-i18n="rec_dest_label">Destination</label>
+                    <input type="text" id="itinDestination" class="form-control" value="Hyderabad" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" data-i18n="itin_days_label">Number of Days</label>
+                    <input type="number" id="itinDays" class="form-control" min="1" max="14" value="2" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" data-i18n="rec_budget_label">Budget Level</label>
+                    <select id="itinBudget" class="form-select">
+                        <option value="Budget">Budget</option>
+                        <option value="Moderate" selected>Moderate</option>
+                        <option value="Premium">Premium</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" data-i18n="rec_traveller_label">Traveller Style</label>
+                    <select id="itinStyle" class="form-select">
+                        <option value="Solo">Solo</option>
+                        <option value="Couple">Couple</option>
+                        <option value="Family">Family</option>
+                    </select>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary px-4"><i class="bi bi-magic me-1"></i> <span data-i18n="itin_btn">Generate Plan</span></button>
+                </div>
+            </form>
+        </div>
+        <div id="itineraryOutput" class="mx-auto" style="max-width: 800px;"></div>
+    </div>
+
+    <!-- 4. VISION / MENU OCR PANE -->
+    <div class="tab-pane fade" id="vision-pane" role="tabpanel">
+        <div class="card feature-card p-4 mx-auto mb-4" style="max-width: 800px;">
+            <h5 class="fw-bold text-primary mb-3"><i class="bi bi-camera me-2"></i><span data-i18n="vision_title">Signboard & Menu Multimodal Vision</span></h5>
+            <form id="visionForm">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" data-i18n="vision_upload_label">Upload Photo (Menu, Signboard, Plaque)</label>
+                    <input type="file" id="visionFile" class="form-control" accept="image/*" required>
+                </div>
+                <div class="image-preview-container mb-3" id="imagePreviewContainer">
+                    <img id="imagePreview" src="" alt="Preview">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" data-i18n="vision_query_label">Specific Question (Optional)</label>
+                    <input type="text" id="visionQuery" class="form-control" data-i18n-placeholder="vision_placeholder" placeholder="e.g., Translate dish names and identify vegetarian items">
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary px-4"><i class="bi bi-cpu me-1"></i> <span data-i18n="vision_btn">Analyze Image</span></button>
+                </div>
+            </form>
+        </div>
+        <div id="visionOutput" class="mx-auto" style="max-width: 800px;"></div>
+    </div>
+
+ <!-- 5. REAL-TIME TRAVEL PHRASE TRANSLATOR -->
+    <div class="tab-pane fade" id="translate-pane" role="tabpanel">
+        <div class="card feature-card p-4 mx-auto mb-4" style="max-width: 800px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-primary m-0"><i class="bi bi-translate me-2"></i><span data-i18n="trans_title">Real-time Travel Phrase Translator</span></h5>
+                <span class="badge bg-primary-subtle text-primary border"><i class="bi bi-volume-up-fill me-1"></i>Audio & Phonetics</span>
+            </div>
+
+            <!-- Quick Phrase Categories (1-Tap Chips) -->
+            <label class="form-label fw-semibold text-muted small mb-2"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>Quick Essential Phrases</label>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <button type="button" class="btn btn-sm btn-outline-secondary quick-phrase-chip" data-phrase="How much does this cost?">💰 Price / Cost</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary quick-phrase-chip" data-phrase="Please use the meter.">🚖 Taxi / Meter</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary quick-phrase-chip" data-phrase="Where is the nearest restroom?">🚻 Restroom</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary quick-phrase-chip" data-phrase="Please make it not spicy / vegetarian.">🍲 Not Spicy / Veg</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary quick-phrase-chip" data-phrase="I need urgent medical help.">🏥 Medical Help</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary quick-phrase-chip" data-phrase="Thank you very much!">🙏 Thank You</button>
+            </div>
+
+            <form id="translateForm">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" data-i18n="trans_input_label">Phrase to Translate</label>
+                    <div class="input-group">
+                        <input type="text" id="transText" class="form-control" data-i18n-placeholder="trans_placeholder" placeholder="Type or click microphone to speak..." required>
+                        <button type="button" id="transMicBtn" class="btn btn-outline-secondary" title="Voice Input"><i class="bi bi-mic-fill"></i></button>
+                    </div>
+                </div>
+                
+                <div class="row g-2 align-items-center mb-3">
+                    <div class="col-sm-6">
+                        <label class="form-label small text-muted mb-1">Target Language:</label>
+                        <select id="transTargetLang" class="form-select form-select-sm">
+                            {% for code, name in languages.items() %}
+                                <option value="{{ code }}" {% if code == 'te' %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-sm-6 text-sm-end pt-sm-3">
+                        <button type="submit" class="btn btn-primary px-4 w-100 w-sm-auto"><i class="bi bi-arrow-repeat me-1"></i> <span data-i18n="trans_btn">Translate</span></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Translation Result Card -->
+        <div id="translateOutput" class="mx-auto" style="max-width: 800px;"></div>
+    </div>
+
+    <!-- 6. EMERGENCY DIRECTORY PANE -->
+    <div class="tab-pane fade" id="emergency-pane" role="tabpanel">
+        <div class="card feature-card p-4 mx-auto mb-4" style="max-width: 800px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-danger m-0"><i class="bi bi-shield-exclamation me-2"></i><span data-i18n="emergency_title">Verified Emergency Support Hub</span></h5>
+                <span class="badge bg-success"><i class="bi bi-lightning-fill me-1"></i><span data-i18n="emergency_badge">Instant / Zero-Latency</span></span>
+            </div>
+            <div class="row g-3 align-items-end mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" data-i18n="emergency_country">Country</label>
+                    <select id="emCountrySelect" class="form-select"></select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" data-i18n="emergency_state">State / Region</label>
+                    <select id="emStateSelect" class="form-select"></select>
+                </div>
+            </div>
+            <div id="emergencyOutput"></div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

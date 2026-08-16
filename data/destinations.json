@@ -1,0 +1,32 @@
+[
+  {
+    "id": "hyd",
+    "name": "Hyderabad",
+    "country": "India",
+    "state": "Telangana",
+    "famous_for": ["History", "Biryani & Food", "Pearls", "Monuments", "Culture"],
+    "popular_seasons": ["October", "November", "December", "January", "February", "March"],
+    "currency": "INR (₹)",
+    "primary_languages": ["Telugu", "Hindi", "English", "Urdu"]
+  },
+  {
+    "id": "del",
+    "name": "Delhi",
+    "country": "India",
+    "state": "Delhi NCR",
+    "famous_for": ["Mughal Heritage", "Street Food", "Shopping", "Monuments"],
+    "popular_seasons": ["October", "November", "December", "January", "February"],
+    "currency": "INR (₹)",
+    "primary_languages": ["Hindi", "English", "Punjabi"]
+  },
+  {
+    "id": "par",
+    "name": "Paris",
+    "country": "France",
+    "state": "Île-de-France",
+    "famous_for": ["Art", "Architecture", "Fashion", "Cuisine", "Romance"],
+    "popular_seasons": ["April", "May", "June", "September", "October"],
+    "currency": "EUR (€)",
+    "primary_languages": ["French", "English"]
+  }
+]

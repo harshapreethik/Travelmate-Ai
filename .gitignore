@@ -1,0 +1,22 @@
+# Environment secrets (NEVER push API keys)
+.env
+*.env
+
+# Virtual environments
+.venv/
+venv/
+
+# Python & Test Caches
+__pycache__/
+*/__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# System & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Temporary logs
+*.log

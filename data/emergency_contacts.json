@@ -1,0 +1,87 @@
+{
+  "India": {
+    "National": {
+      "police": "112",
+      "ambulance": "108 / 102",
+      "fire": "101",
+      "tourist_helpline": "1363",
+      "women_helpline": "1091",
+      "disaster_mgmt": "1078",
+      "safety_note": "National emergency number 112 works across all states in India. Dial 1363 for 24x7 multi-language tourist support."
+    },
+    "Telangana (Hyderabad)": {
+      "police": "100 / 112",
+      "ambulance": "108",
+      "fire": "101",
+      "tourist_helpline": "1363",
+      "traffic_police": "040-27852482",
+      "women_safety": "SHE Teams (9490616555)",
+      "safety_note": "Hyderabad has dedicated SHE Teams for women's safety. 100 and 112 connect directly to the central police control room."
+    },
+    "Maharashtra (Mumbai)": {
+      "police": "100 / 112",
+      "ambulance": "108",
+      "fire": "101",
+      "tourist_helpline": "1363",
+      "traffic_police": "022-24937747",
+      "women_safety": "103",
+      "safety_note": "Mumbai operates dedicated Tourist Police squads around Gateway of India and Colaba."
+    },
+    "Delhi (NCR)": {
+      "police": "112",
+      "ambulance": "102 / 108",
+      "fire": "101",
+      "tourist_helpline": "1363",
+      "traffic_police": "011-25844444",
+      "women_safety": "1091",
+      "safety_note": "Delhi Police Tourist Patrol vans are stationed near major monuments."
+    },
+    "Karnataka (Bengaluru)": {
+      "police": "112",
+      "ambulance": "108",
+      "fire": "101",
+      "tourist_helpline": "1363",
+      "traffic_police": "080-22943030",
+      "women_safety": "1091",
+      "safety_note": "Namma 112 vehicles respond rapidly across urban Bengaluru."
+    }
+  },
+  "United States": {
+    "National": {
+      "police": "911",
+      "ambulance": "911",
+      "fire": "911",
+      "tourist_helpline": "1-800-225-5324",
+      "poison_control": "1-800-222-1222",
+      "safety_note": "911 handles all emergency services (police, ambulance, fire) across all 50 states."
+    }
+  },
+  "United Kingdom": {
+    "National": {
+      "police": "999 / 112",
+      "ambulance": "999 / 112",
+      "fire": "999 / 112",
+      "non_emergency_medical": "111",
+      "non_emergency_police": "101",
+      "safety_note": "Dial 999 or 112 for urgent emergencies. Dial 111 for non-emergency NHS medical advice."
+    }
+  },
+  "France": {
+    "National": {
+      "police": "17 / 112",
+      "ambulance": "15 (SAMU)",
+      "fire": "18",
+      "european_emergency": "112",
+      "safety_note": "Dial 112 for English-speaking European emergency operators, or 15 directly for medical emergencies."
+    }
+  },
+  "Japan": {
+    "National": {
+      "police": "110",
+      "ambulance": "119",
+      "fire": "119",
+      "japan_helpline": "0570-000-911",
+      "safety_note": "Dial 110 for police (Koban) and 119 for ambulance/fire. English interpretation is available on 110/119 in major cities."
+    }
+  }
+}
