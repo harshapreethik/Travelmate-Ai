@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Floating Cart Bar (Only shows when on Places tab and not dismissed)
+        // Floating Cart Bar
         if (floatingCartBar) {
             if (count > 0 && isPlacesTabActive() && !forceHideFloating) {
                 floatingCartBar.classList.remove("d-none");
@@ -171,7 +171,6 @@ document.addEventListener("DOMContentLoaded", () => {
         renderCartInItinerary();
     }
 
-    // Dismiss floating bar manually
     if (floatingDismissBtn) {
         floatingDismissBtn.addEventListener("click", () => {
             if (floatingCartBar) {
@@ -181,7 +180,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Hide floating bar when tab changes
     document.querySelectorAll('#travelTab button[data-bs-toggle="tab"]').forEach(tabBtn => {
         tabBtn.addEventListener('shown.bs.tab', (e) => {
             if (e.target.id !== "recs-tab") {
@@ -224,7 +222,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const customInterests = document.getElementById("recCustomInterests") ? document.getElementById("recCustomInterests").value.trim() : "";
             const maxBudget = recInput ? `Under ₹${recInput.value}` : "Moderate";
 
-            // Sync destination to itinerary automatically
             const itinDestInput = document.getElementById("itinDestination");
             if (itinDestInput) itinDestInput.value = destination;
 
@@ -323,7 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     outputHtml += '</div>';
                     recOutput.innerHTML = outputHtml;
 
-                    // Click listeners for Add to Plan
                     document.querySelectorAll(".add-cart-btn").forEach(btn => {
                         btn.addEventListener("click", () => {
                             const place = btn.getAttribute("data-name");
@@ -433,7 +429,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
 
             const destination = document.getElementById("itinDestination").value.trim();
-            const numDays = parseInt(document.getElementById("itinDays").value);
+            const numDays = parseInt(document.getElementById("itinDays").value) || 2;
             const budgetAmount = budgetInput ? `₹${budgetInput.value}` : "₹5,000";
             const travellerType = document.getElementById("itinStyle").value;
             const customSchedule = document.getElementById("itinCustomSchedule") ? document.getElementById("itinCustomSchedule").value.trim() : "";
@@ -455,16 +451,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
                 const data = await res.json();
 
-                if (data.status === "success") {
+                if (data.status === "success" && data.data) {
                     const plan = data.data;
-                    const days = plan.days || [];
+                    const days = Array.isArray(plan.days) ? plan.days : [];
 
                     let outputHtml = `
                         <div class="card p-3 mb-4 border-0 shadow-sm bg-dark text-white rounded-3">
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                                 <div>
-                                    <h5 class="fw-bold m-0"><i class="bi bi-geo-alt-fill text-primary me-2"></i>${plan.num_days}-Day Trip to ${plan.destination}</h5>
-                                    <small class="text-white-50">${plan.budget_level} Budget • ${travellerType}</small>
+                                    <h5 class="fw-bold m-0"><i class="bi bi-geo-alt-fill text-primary me-2"></i>${plan.num_days || numDays}-Day Trip to ${plan.destination || destination}</h5>
+                                    <small class="text-white-50">${plan.budget_level || budgetAmount} Budget • ${travellerType}</small>
                                 </div>
                                 <div class="text-end">
                                     <span class="badge bg-primary px-3 py-2 fs-6"><i class="bi bi-wallet2 me-1"></i>${plan.estimated_daily_budget || 'Budget Planned'}</span>
@@ -479,11 +475,27 @@ document.addEventListener("DOMContentLoaded", () => {
                     `;
 
                     days.forEach(d => {
+                        const mAct = typeof d.morning === 'object' ? (d.morning?.activity || 'Morning Sightseeing') : (d.morning || 'Morning Sightseeing');
+                        const mDesc = typeof d.morning === 'object' ? (d.morning?.description || '') : '';
+                        const mDur = typeof d.morning === 'object' ? (d.morning?.duration || '3 hrs') : '3 hrs';
+
+                        const aAct = typeof d.afternoon === 'object' ? (d.afternoon?.activity || 'Afternoon Landmark') : (d.afternoon || 'Afternoon Landmark');
+                        const aDesc = typeof d.afternoon === 'object' ? (d.afternoon?.description || '') : '';
+                        const aDur = typeof d.afternoon === 'object' ? (d.afternoon?.duration || '2.5 hrs') : '2.5 hrs';
+
+                        const eAct = typeof d.evening === 'object' ? (d.evening?.activity || 'Evening Exploration') : (d.evening || 'Evening Exploration');
+                        const eDesc = typeof d.evening === 'object' ? (d.evening?.description || '') : '';
+                        const eDur = typeof d.evening === 'object' ? (d.evening?.duration || '3 hrs') : '3 hrs';
+
+                        const bFast = d.dining_plan ? (d.dining_plan.breakfast || 'Traditional Breakfast') : 'Traditional Breakfast';
+                        const lunch = d.dining_plan ? (d.dining_plan.lunch || 'Regional Specialty') : 'Regional Specialty';
+                        const dinner = d.dining_plan ? (d.dining_plan.dinner || 'Signature Dinner') : 'Signature Dinner';
+
                         outputHtml += `
                             <div class="card p-4 mb-4 shadow-sm border-0 rounded-3">
                                 <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
                                     <h6 class="fw-bold text-primary m-0 fs-5">
-                                        <i class="bi bi-calendar-event me-2"></i>Day ${d.day_number}: ${d.theme}
+                                        <i class="bi bi-calendar-event me-2"></i>Day ${d.day_number || 1}: ${d.theme || 'Exploration'}
                                     </h6>
                                     <span class="badge bg-light text-secondary border">Full Day Plan</span>
                                 </div>
@@ -493,63 +505,61 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <div class="mb-3 ps-3 border-start border-3 border-warning position-relative">
                                         <div class="d-flex justify-content-between align-items-start mb-1">
                                             <strong class="text-dark"><i class="bi bi-sunrise-fill text-warning me-2"></i>Morning</strong>
-                                            <span class="badge bg-light text-secondary border small">${d.morning.duration || '3 hrs'}</span>
+                                            <span class="badge bg-light text-secondary border small">${mDur}</span>
                                         </div>
-                                        <div class="fw-semibold text-primary small">${d.morning.activity}</div>
-                                        <p class="text-muted small m-0">${d.morning.description}</p>
+                                        <div class="fw-semibold text-primary small">${mAct}</div>
+                                        <p class="text-muted small m-0">${mDesc}</p>
                                     </div>
 
                                     <div class="mb-3 ps-3 border-start border-3 border-primary position-relative">
                                         <div class="d-flex justify-content-between align-items-start mb-1">
                                             <strong class="text-dark"><i class="bi bi-sun-fill text-primary me-2"></i>Afternoon</strong>
-                                            <span class="badge bg-light text-secondary border small">${d.afternoon.duration || '2.5 hrs'}</span>
+                                            <span class="badge bg-light text-secondary border small">${aDur}</span>
                                         </div>
-                                        <div class="fw-semibold text-primary small">${d.afternoon.activity}</div>
-                                        <p class="text-muted small m-0">${d.afternoon.description}</p>
+                                        <div class="fw-semibold text-primary small">${aAct}</div>
+                                        <p class="text-muted small m-0">${aDesc}</p>
                                     </div>
 
                                     <div class="mb-3 ps-3 border-start border-3 border-info position-relative">
                                         <div class="d-flex justify-content-between align-items-start mb-1">
                                             <strong class="text-dark"><i class="bi bi-moon-stars-fill text-info me-2"></i>Evening</strong>
-                                            <span class="badge bg-light text-secondary border small">${d.evening.duration || '3 hrs'}</span>
+                                            <span class="badge bg-light text-secondary border small">${eDur}</span>
                                         </div>
-                                        <div class="fw-semibold text-primary small">${d.evening.activity}</div>
-                                        <p class="text-muted small m-0">${d.evening.description}</p>
+                                        <div class="fw-semibold text-primary small">${eAct}</div>
+                                        <p class="text-muted small m-0">${eDesc}</p>
                                     </div>
                                 </div>
 
-                                <!-- Dining Section -->
-                                ${d.dining_plan ? `
-                                    <div class="p-3 bg-light rounded-3 border mb-3">
-                                        <h6 class="fw-bold text-dark mb-2 small text-uppercase letter-spacing-1">
-                                            <i class="bi bi-cup-hot-fill text-danger me-1"></i>Day ${d.day_number} Meals & Dining
-                                        </h6>
-                                        <div class="row g-2 small">
-                                            <div class="col-md-4">
-                                                <div class="p-2 bg-white rounded border">
-                                                    <span class="text-muted d-block" style="font-size: 0.75rem;">BREAKFAST</span>
-                                                    <strong class="text-dark">${d.dining_plan.breakfast || 'Traditional Breakfast'}</strong>
-                                                </div>
+                                <!-- Dining Plan -->
+                                <div class="p-3 bg-light rounded-3 border mb-3">
+                                    <h6 class="fw-bold text-dark mb-2 small text-uppercase letter-spacing-1">
+                                        <i class="bi bi-cup-hot-fill text-danger me-1"></i>Day ${d.day_number || 1} Meals & Dining
+                                    </h6>
+                                    <div class="row g-2 small">
+                                        <div class="col-md-4">
+                                            <div class="p-2 bg-white rounded border">
+                                                <span class="text-muted d-block" style="font-size: 0.75rem;">BREAKFAST</span>
+                                                <strong class="text-dark">${bFast}</strong>
                                             </div>
-                                            <div class="col-md-4">
-                                                <div class="p-2 bg-white rounded border">
-                                                    <span class="text-muted d-block" style="font-size: 0.75rem;">LUNCH</span>
-                                                    <strong class="text-dark">${d.dining_plan.lunch || 'Regional Specialty'}</strong>
-                                                </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="p-2 bg-white rounded border">
+                                                <span class="text-muted d-block" style="font-size: 0.75rem;">LUNCH</span>
+                                                <strong class="text-dark">${lunch}</strong>
                                             </div>
-                                            <div class="col-md-4">
-                                                <div class="p-2 bg-white rounded border">
-                                                    <span class="text-muted d-block" style="font-size: 0.75rem;">DINNER / STREET FOOD</span>
-                                                    <strong class="text-dark">${d.dining_plan.dinner || 'Signature Dinner'}</strong>
-                                                </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="p-2 bg-white rounded border">
+                                                <span class="text-muted d-block" style="font-size: 0.75rem;">DINNER / STREET FOOD</span>
+                                                <strong class="text-dark">${dinner}</strong>
                                             </div>
                                         </div>
                                     </div>
-                                ` : ''}
+                                </div>
 
                                 ${d.pro_tip ? `
                                     <div class="p-2 bg-light rounded border-start border-warning border-3 small">
-                                        <strong class="text-dark"><i class="bi bi-lightbulb-fill text-warning me-1"></i>Day ${d.day_number} Tip:</strong> ${d.pro_tip}
+                                        <strong class="text-dark"><i class="bi bi-lightbulb-fill text-warning me-1"></i>Tip:</strong> ${d.pro_tip}
                                     </div>
                                 ` : ''}
                             </div>
@@ -558,22 +568,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     itinOutput.innerHTML = outputHtml;
                 } else {
-                    itinOutput.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+                    itinOutput.innerHTML = `<div class="alert alert-warning">${data.message || 'Unable to build plan.'}</div>`;
                 }
             } catch (err) {
+                console.error("Itinerary render error:", err);
                 itinOutput.innerHTML = '<div class="alert alert-danger">Error generating itinerary. Please try again.</div>';
             }
         });
     }
 
     // -------------------------------------------------------------------
-    // 4. VISION / MENU OCR HANDLER
+    // 4. VISION / MENU OCR HANDLER (With Target Language Pickers)
     // -------------------------------------------------------------------
     const visionFile = document.getElementById("visionFile");
     const imagePreviewContainer = document.getElementById("imagePreviewContainer");
     const imagePreview = document.getElementById("imagePreview");
     const visionForm = document.getElementById("visionForm");
     const visionOutput = document.getElementById("visionOutput");
+    const visionTargetLang = document.getElementById("visionTargetLang");
 
     if (visionFile && imagePreview && imagePreviewContainer) {
         visionFile.addEventListener("change", () => {
@@ -595,11 +607,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const file = visionFile ? visionFile.files[0] : null;
             if (!file) return;
 
-            visionOutput.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Analyzing image with Gemini Vision...</p></div>';
+            const targetLang = visionTargetLang ? visionTargetLang.value : "English";
+
+            visionOutput.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Analyzing image and translating text...</p></div>';
 
             const formData = new FormData();
             formData.append("file", file);
             formData.append("destination", "Global / Any Destination");
+            formData.append("target_lang", targetLang);
             formData.append("user_query", document.getElementById("visionQuery") ? document.getElementById("visionQuery").value : "");
 
             try {
@@ -612,12 +627,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (data.status === "success") {
                     visionOutput.innerHTML = `
                         <div class="card feature-card p-4 shadow-sm border-0 rounded-3">
-                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-eye me-2"></i>Vision Analysis Result</h6>
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-eye me-2"></i>Visual Analysis Result (${targetLang})</h6>
                             <div>${formatMarkdown(data.analysis)}</div>
                         </div>
                     `;
                 } else {
-                    visionOutput.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+                    visionOutput.innerHTML = `<div class="alert alert-warning">${data.message || 'Failed to process image.'}</div>`;
                 }
             } catch (err) {
                 visionOutput.innerHTML = '<div class="alert alert-danger">Error processing image.</div>';
@@ -626,12 +641,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 5. TRANSLATOR HANDLER (Auto-Detect, Chips, Speech & TTS)
+    // 5. TRANSLATOR HANDLER (Auto-Detect, Source/Target Pickers, Swap & TTS)
     // -------------------------------------------------------------------
     const transForm = document.getElementById("translateForm");
     const transText = document.getElementById("transText");
     const transOutput = document.getElementById("translateOutput");
     const transMicBtn = document.getElementById("transMicBtn");
+    const transSourceLang = document.getElementById("transSourceLang");
+    const transTargetLang = document.getElementById("transTargetLang");
+    const swapLangBtn = document.getElementById("swapLangBtn");
+
+    if (swapLangBtn && transSourceLang && transTargetLang) {
+        swapLangBtn.addEventListener("click", () => {
+            if (transSourceLang.value !== "auto") {
+                const temp = transSourceLang.value;
+                transSourceLang.value = transTargetLang.value;
+                transTargetLang.value = temp;
+            }
+        });
+    }
 
     document.querySelectorAll(".quick-phrase-chip").forEach(chip => {
         chip.addEventListener("click", () => {
@@ -669,7 +697,15 @@ document.addEventListener("DOMContentLoaded", () => {
             const textToTranslate = transText.value.trim();
             if (!textToTranslate) return;
 
-            transOutput.innerHTML = '<div class="text-center p-3"><div class="spinner-border text-primary" role="status"></div></div>';
+            const targetLang = transTargetLang ? transTargetLang.value : "Telugu";
+            const sourceLang = transSourceLang ? transSourceLang.value : "auto";
+
+            transOutput.innerHTML = `
+                <div class="text-center p-3">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="small text-muted mt-2">Translating to ${targetLang} with phonetics...</p>
+                </div>
+            `;
 
             try {
                 const res = await fetch("/api/translate", {
@@ -677,18 +713,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         text: textToTranslate,
-                        destination: "Global / Any Destination"
+                        target_lang: targetLang,
+                        source_lang: sourceLang,
+                        destination: "Global"
                     })
                 });
                 const data = await res.json();
 
                 if (data.status === "success") {
-                    const rawText = data.data.translation_data || "";
+                    const rawText = (data.data && data.data.translation_data) ? data.data.translation_data : (typeof data.data === 'string' ? data.data : "");
                     
                     transOutput.innerHTML = `
                         <div class="card feature-card p-4 shadow-sm border-0 rounded-3">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold text-primary m-0"><i class="bi bi-check2-circle me-1"></i>Translation Result</h6>
+                                <h6 class="fw-bold text-primary m-0"><i class="bi bi-translate me-2"></i>Translation (${targetLang})</h6>
                                 <button class="btn btn-sm btn-outline-primary" id="playAudioBtn">
                                     <i class="bi bi-volume-up-fill me-1"></i>Listen (TTS)
                                 </button>
@@ -700,12 +738,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     const playBtn = document.getElementById("playAudioBtn");
                     if (playBtn && 'speechSynthesis' in window) {
                         playBtn.addEventListener("click", () => {
-                            const cleanText = rawText.replace(/[*#]/g, '');
+                            const cleanText = rawText.replace(/[*#_`]/g, '');
                             window.speechSynthesis.speak(new SpeechSynthesisUtterance(cleanText));
                         });
                     }
                 } else {
-                    transOutput.innerHTML = `<div class="alert alert-warning">${data.message}</div>`;
+                    transOutput.innerHTML = `<div class="alert alert-warning">${data.message || 'Translation failed.'}</div>`;
                 }
             } catch (err) {
                 transOutput.innerHTML = '<div class="alert alert-danger">Translation error. Please try again.</div>';

@@ -2,105 +2,163 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TravelMate AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TravelMate AI — Smart Travel Companion</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Mobile vs Desktop Navigation Pane Styles */
+        .mobile-section-selector {
+            display: none;
+        }
+        @media (max-width: 767.98px) {
+            .desktop-nav-pills {
+                display: none !important;
+            }
+            .mobile-section-selector {
+                display: block;
+            }
+            .floating-cart-responsive {
+                width: 95% !important;
+                bottom: 12px !important;
+            }
+            .card {
+                border-radius: 14px !important;
+            }
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        .suggestion-pill {
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            color: #334155;
+            transition: all 0.2s ease;
+        }
+        .suggestion-pill:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-light">
 
     <!-- Header Navigation -->
-    <nav class="navbar navbar-expand-lg px-4 py-3 sticky-top">
+    <nav class="navbar navbar-expand-lg px-3 px-md-4 py-3 sticky-top bg-white border-bottom shadow-sm">
         <div class="container-fluid max-w-screen-lg mx-auto p-0" style="max-width: 900px;">
-            <a class="navbar-brand fw-semibold d-flex align-items-center" href="#">
-                <i class="bi bi-compass-fill text-dark me-2 fs-5"></i>
+            <a class="navbar-brand fw-bold d-flex align-items-center text-dark" href="#">
+                <i class="bi bi-compass-fill text-primary me-2 fs-4"></i>
                 <span>TravelMate AI</span>
             </a>
-            <span class="text-secondary small">Companion</span>
+            <span class="badge bg-light text-secondary border px-2 py-1 small fw-normal">AI Companion</span>
         </div>
     </nav>
 
     <!-- Main Container -->
-    <div class="container my-4" style="max-width: 900px;">
+    <div class="container my-3 my-md-4" style="max-width: 900px;">
         
-        <!-- Navigation Tabs -->
-        <ul class="nav nav-pills nav-fill mb-4" id="travelTab" role="tablist">
+        <!-- DESKTOP NAVIGATION PILLS (Visible on md and above) -->
+        <ul class="nav nav-pills nav-fill mb-4 desktop-nav-pills bg-white p-1 rounded-3 border shadow-sm" id="travelTab" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pane" type="button" role="tab">
-                    Chat
+                <button class="nav-link active fw-medium py-2" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pane" type="button" role="tab">
+                    <i class="bi bi-chat-dots me-1"></i> Chat
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="recs-tab" data-bs-toggle="tab" data-bs-target="#recs-pane" type="button" role="tab">
-                    Places
+                <button class="nav-link fw-medium py-2" id="recs-tab" data-bs-toggle="tab" data-bs-target="#recs-pane" type="button" role="tab">
+                    <i class="bi bi-geo-alt me-1"></i> Places
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="itin-tab" data-bs-toggle="tab" data-bs-target="#itin-pane" type="button" role="tab">
-                    Itinerary <span id="cartCountBadge" class="badge bg-dark ms-1 rounded-pill d-none">0</span>
+                <button class="nav-link fw-medium py-2" id="itin-tab" data-bs-toggle="tab" data-bs-target="#itin-pane" type="button" role="tab">
+                    <i class="bi bi-calendar-week me-1"></i> Itinerary <span id="cartCountBadge" class="badge bg-dark ms-1 rounded-pill d-none">0</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="vision-tab" data-bs-toggle="tab" data-bs-target="#vision-pane" type="button" role="tab">
-                    Vision OCR
+                <button class="nav-link fw-medium py-2" id="vision-tab" data-bs-toggle="tab" data-bs-target="#vision-pane" type="button" role="tab">
+                    <i class="bi bi-camera me-1"></i> Vision OCR
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="trans-tab" data-bs-toggle="tab" data-bs-target="#trans-pane" type="button" role="tab">
-                    Translator
+                <button class="nav-link fw-medium py-2" id="trans-tab" data-bs-toggle="tab" data-bs-target="#trans-pane" type="button" role="tab">
+                    <i class="bi bi-translate me-1"></i> Translator
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="emergency-tab" data-bs-toggle="tab" data-bs-target="#emergency-pane" type="button" role="tab">
-                    Emergency
+                <button class="nav-link fw-medium py-2" id="emergency-tab" data-bs-toggle="tab" data-bs-target="#emergency-pane" type="button" role="tab">
+                    <i class="bi bi-shield-exclamation me-1"></i> Emergency
                 </button>
             </li>
         </ul>
+
+        <!-- MOBILE SECTION SELECTOR PANE (Visible on phones < 768px) -->
+        <div class="mobile-section-selector mb-3 sticky-top" style="top: 68px; z-index: 1020;">
+            <div class="card border shadow-sm p-2 bg-white">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="small text-muted fw-semibold text-nowrap"><i class="bi bi-layers-fill text-primary me-1"></i>Section:</span>
+                    <select class="form-select form-select-sm fw-semibold text-dark border-secondary-subtle" id="mobileNavSelect">
+                        <option value="chat-pane" selected>💬 Chat Assistant</option>
+                        <option value="recs-pane">📍 Places & Discovery</option>
+                        <option value="itin-pane">🗓️ Itinerary Planner (0 in Cart)</option>
+                        <option value="vision-pane">📷 Vision OCR & Menus</option>
+                        <option value="trans-pane">🌐 Travel Translator</option>
+                        <option value="emergency-pane">🚨 Emergency Helplines</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
         <!-- Tab Content Panes -->
         <div class="tab-content" id="travelTabContent">
             
             <!-- 1. CHAT ASSISTANT -->
             <div class="tab-pane fade show active" id="chat-pane" role="tabpanel">
-                <div class="card border-0 p-4">
+                <div class="card border p-3 p-md-4 shadow-sm bg-white">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="fw-semibold text-dark m-0">Travel Assistant</h6>
+                        <h6 class="fw-semibold text-dark m-0 d-flex align-items-center">
+                            <i class="bi bi-chat-heart text-primary me-2 fs-5"></i>Travel Assistant
+                        </h6>
                     </div>
                     
-                    <div id="chatWindow" class="chat-window p-3 mb-3" style="height: 420px; overflow-y: auto;">
-                        <div class="chat-bubble bot">
-                            How can I help you plan or navigate your journey today?
+                    <div id="chatWindow" class="chat-window p-3 mb-3 bg-light rounded-3" style="height: 400px; overflow-y: auto;">
+                        <div class="chat-bubble bot bg-white p-3 rounded-3 shadow-sm border mb-2" style="max-width: 85%;">
+                            How can I help you plan, explore, or navigate your journey today?
                         </div>
                     </div>
 
                     <!-- Suggestion Prompts -->
                     <div class="d-flex flex-wrap gap-2 mb-3">
                         <button type="button" class="suggestion-pill" data-prompt="Top hidden spots to visit in Hyderabad">Top spots in Hyderabad</button>
-                        <button type="button" class="suggestion-pill" data-prompt="Must-try local dishes and best eateries">Must-try food guide</button>
-                        <button type="button" class="suggestion-pill" data-prompt="Public transit options from airport to city center">Airport transit advice</button>
+                        <button type="button" class="suggestion-pill" data-prompt="Must-try local dishes and best eateries in Hyderabad">Must-try food guide</button>
+                        <button type="button" class="suggestion-pill" data-prompt="Public transit options from airport to city center in Hyderabad">Airport transit advice</button>
                     </div>
 
                     <form id="chatForm" class="d-flex gap-2">
                         <input type="text" id="chatInput" class="form-control" placeholder="Ask a question or request travel advice..." required autocomplete="off">
-                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-arrow-up"></i></button>
+                        <button type="submit" class="btn btn-primary px-3 px-md-4"><i class="bi bi-send-fill"></i></button>
                     </form>
                 </div>
             </div>
 
             <!-- 2. PLACES / RECOMMENDATIONS -->
             <div class="tab-pane fade" id="recs-pane" role="tabpanel">
-                <div class="card p-4 mb-4">
-                    <h6 class="fw-semibold text-dark mb-3">Discover Places</h6>
+                <div class="card p-3 p-md-4 mb-4 border shadow-sm bg-white">
+                    <h6 class="fw-semibold text-dark mb-3 d-flex align-items-center">
+                        <i class="bi bi-geo-alt-fill text-primary me-2 fs-5"></i>Discover Places
+                    </h6>
                     <form id="recommendationForm">
                         <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label small text-muted">Destination</label>
                                 <input type="text" id="recDestination" class="form-control" value="Hyderabad" required>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-6 col-md-3">
                                 <label class="form-label small text-muted">Traveler Type</label>
                                 <select id="recTravellerType" class="form-select">
                                     <option value="Solo">Solo Explorer</option>
@@ -109,14 +167,14 @@
                                     <option value="Friends">Friends Group</option>
                                 </select>
                             </div>
-                            <div class="col-md-5">
+                            <div class="col-6 col-md-5">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label class="form-label small text-muted m-0">Max Cost Per Spot</label>
                                     <span id="recBudgetDisplay" class="small fw-semibold text-dark">₹1,500</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <input type="range" class="form-range" id="recBudgetSlider" min="0" max="10000" step="250" value="1500">
-                                    <div class="input-group input-group-sm" style="max-width: 110px;">
+                                    <div class="input-group input-group-sm" style="max-width: 105px;">
                                         <span class="input-group-text">₹</span>
                                         <input type="number" class="form-control" id="recBudgetInput" min="0" step="250" value="1500">
                                     </div>
@@ -140,7 +198,7 @@
                                 <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Nightlife & Entertainment" id="cbEvents"><label class="form-check-label small" for="cbEvents">Shows & Events</label></div>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Find Places</button>
+                        <button type="submit" class="btn btn-primary w-100 w-md-auto">Find Places</button>
                     </form>
                 </div>
                 <div id="recommendationsOutput"></div>
@@ -148,8 +206,10 @@
 
             <!-- 3. ITINERARY BUILDER -->
             <div class="tab-pane fade" id="itin-pane" role="tabpanel">
-                <div class="card p-4 mb-4">
-                    <h6 class="fw-semibold text-dark mb-3">Itinerary Planner</h6>
+                <div class="card p-3 p-md-4 mb-4 border shadow-sm bg-white">
+                    <h6 class="fw-semibold text-dark mb-3 d-flex align-items-center">
+                        <i class="bi bi-calendar-event-fill text-primary me-2 fs-5"></i>Itinerary Planner
+                    </h6>
                     <form id="itineraryForm">
                         
                         <!-- Pinned Places in Cart -->
@@ -162,22 +222,22 @@
                         </div>
 
                         <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label small text-muted">Destination</label>
                                 <input type="text" id="itinDestination" class="form-control" value="Hyderabad" required>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-6 col-md-3">
                                 <label class="form-label small text-muted">Duration (Days)</label>
                                 <input type="number" id="itinDays" class="form-control" min="1" max="14" value="2" required>
                             </div>
-                            <div class="col-md-5">
+                            <div class="col-6 col-md-5">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label class="form-label small text-muted m-0">Total Trip Budget</label>
                                     <span id="budgetDisplay" class="small fw-semibold text-dark">₹5,000</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <input type="range" class="form-range" id="itinBudgetSlider" min="1000" max="50000" step="500" value="5000">
-                                    <div class="input-group input-group-sm" style="max-width: 110px;">
+                                    <div class="input-group input-group-sm" style="max-width: 105px;">
                                         <span class="input-group-text">₹</span>
                                         <input type="number" class="form-control" id="itinBudgetInput" min="500" step="500" value="5000">
                                     </div>
@@ -186,7 +246,7 @@
                         </div>
 
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label small text-muted">Travel Style</label>
                                 <select id="itinStyle" class="form-select">
                                     <option value="Solo">Solo Explorer</option>
@@ -195,12 +255,12 @@
                                     <option value="Couples">Couple</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label small text-muted">Daily Routine / Events (Optional)</label>
                                 <input type="text" id="itinCustomSchedule" class="form-control" placeholder="e.g., Include 7 AM Gym, late night concerts">
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Generate Schedule</button>
+                        <button type="submit" class="btn btn-primary w-100 w-md-auto">Generate Schedule</button>
                     </form>
                 </div>
                 <div id="itineraryOutput"></div>
@@ -208,21 +268,37 @@
 
             <!-- 4. VISION / MENU OCR -->
             <div class="tab-pane fade" id="vision-pane" role="tabpanel">
-                <div class="card p-4 mb-4">
-                    <h6 class="fw-semibold text-dark mb-3">Visual Analysis & OCR</h6>
+                <div class="card p-3 p-md-4 mb-4 border shadow-sm bg-white">
+                    <h6 class="fw-semibold text-dark mb-3 d-flex align-items-center">
+                        <i class="bi bi-camera-fill text-primary me-2 fs-5"></i>Visual Analysis & OCR
+                    </h6>
                     <form id="visionForm">
                         <div class="mb-3">
                             <label class="form-label small text-muted">Upload Signboard, Menu, or Landmark Image</label>
-                            <input type="file" id="visionFile" class="form-control" accept="image/*" required>
+                            <input type="file" id="visionFile" class="form-control" accept="image/*" capture="environment" required>
                         </div>
                         <div class="mb-3 text-center" id="imagePreviewContainer" style="display: none;">
-                            <img id="imagePreview" src="" alt="Preview" class="img-thumbnail rounded" style="max-height: 240px;">
+                            <img id="imagePreview" src="" alt="Preview" class="img-thumbnail rounded shadow-sm" style="max-height: 240px;">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small text-muted">Specific Instructions (Optional)</label>
-                            <input type="text" id="visionQuery" class="form-control" placeholder="e.g., Identify vegetarian options or translate key text">
+                        <div class="row g-2 mb-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label small text-muted">Translate Text To</label>
+                                <select id="visionTargetLang" class="form-select">
+                                    <option value="English" selected>English</option>
+                                    <option value="Telugu">Telugu (తెలుగు)</option>
+                                    <option value="Hindi">Hindi (हिन्दी)</option>
+                                    <option value="Tamil">Tamil (தமிழ்)</option>
+                                    <option value="Spanish">Spanish (Español)</option>
+                                    <option value="Japanese">Japanese (日本語)</option>
+                                    <option value="French">French (Français)</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label small text-muted">Specific Focus (Optional)</label>
+                                <input type="text" id="visionQuery" class="form-control" placeholder="e.g., Identify vegetarian items, allergy warnings">
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Analyze Image</button>
+                        <button type="submit" class="btn btn-primary w-100 w-md-auto">Analyze & Translate Image</button>
                     </form>
                 </div>
                 <div id="visionOutput"></div>
@@ -230,24 +306,67 @@
 
             <!-- 5. TRANSLATOR -->
             <div class="tab-pane fade" id="trans-pane" role="tabpanel">
-                <div class="card p-4 mb-4">
-                    <h6 class="fw-semibold text-dark mb-3">Travel Translator</h6>
+                <div class="card p-3 p-md-4 mb-4 border shadow-sm bg-white">
+                    <h6 class="fw-semibold text-dark mb-3 d-flex align-items-center">
+                        <i class="bi bi-translate text-primary me-2 fs-5"></i>Travel Translator
+                    </h6>
                     
+                    <!-- Language Selection Toolbar -->
+                    <div class="row g-2 align-items-center mb-3">
+                        <div class="col-5">
+                            <label class="form-label small text-muted mb-1">From</label>
+                            <select id="transSourceLang" class="form-select form-select-sm">
+                                <option value="auto" selected>🌐 Auto Detect</option>
+                                <option value="English">English</option>
+                                <option value="Telugu">Telugu (తెలుగు / Tanglish)</option>
+                                <option value="Hindi">Hindi (हिन्दी / Hinglish)</option>
+                                <option value="Tamil">Tamil (தமிழ்)</option>
+                                <option value="Kannada">Kannada (ಕನ್ನಡ)</option>
+                                <option value="Spanish">Spanish (Español)</option>
+                                <option value="French">French (Français)</option>
+                                <option value="German">German (Deutsch)</option>
+                                <option value="Japanese">Japanese (日本語)</option>
+                                <option value="Arabic">Arabic (العربية)</option>
+                            </select>
+                        </div>
+                        <div class="col-2 text-center pt-3">
+                            <button type="button" id="swapLangBtn" class="btn btn-sm btn-outline-secondary rounded-circle" title="Swap languages">
+                                <i class="bi bi-arrow-left-right"></i>
+                            </button>
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small text-muted mb-1">To</label>
+                            <select id="transTargetLang" class="form-select form-select-sm">
+                                <option value="Telugu" selected>Telugu (తెలుగు)</option>
+                                <option value="Hindi">Hindi (हिन्दी)</option>
+                                <option value="English">English</option>
+                                <option value="Tamil">Tamil (தமிழ்)</option>
+                                <option value="Kannada">Kannada (ಕನ್ನಡ)</option>
+                                <option value="Spanish">Spanish (Español)</option>
+                                <option value="French">French (Français)</option>
+                                <option value="German">German (Deutsch)</option>
+                                <option value="Japanese">Japanese (日本語)</option>
+                                <option value="Arabic">Arabic (العربية)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Quick Travel Phrase Pills -->
                     <div class="d-flex flex-wrap gap-2 mb-3">
-                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Where is the nearest hospital or medical clinic?">Medical Assistance</button>
-                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="How much is this, and can you provide a receipt?">Price & Receipt</button>
-                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Is this food strictly vegetarian with no eggs?">Vegetarian Check</button>
-                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Please use the meter for the fare to the airport.">Taxi Fare</button>
+                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Where is the nearest hospital or medical clinic?">🏥 Medical Help</button>
+                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="How much does this cost? Can you give me a bill?">💳 Price & Bill</button>
+                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Is this food purely vegetarian without eggs or meat?">🥗 Vegetarian Check</button>
+                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Please turn on the meter for the ride to the destination.">🚖 Taxi Meter</button>
                     </div>
 
                     <form id="translateForm">
                         <div class="mb-3">
                             <div class="input-group">
-                                <input type="text" id="transText" class="form-control" placeholder="Enter phrase to translate..." required>
-                                <button type="button" id="transMicBtn" class="btn btn-outline-secondary" title="Speech to text"><i class="bi bi-mic"></i></button>
+                                <input type="text" id="transText" class="form-control" placeholder="Enter text or speak in any language..." required>
+                                <button type="button" id="transMicBtn" class="btn btn-outline-secondary" title="Speech to text"><i class="bi bi-mic-fill"></i></button>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Translate</button>
+                        <button type="submit" class="btn btn-primary w-100 w-md-auto">Translate Phrase</button>
                     </form>
                 </div>
                 <div id="translateOutput"></div>
@@ -255,14 +374,16 @@
 
             <!-- 6. EMERGENCY DIRECTORY -->
             <div class="tab-pane fade" id="emergency-pane" role="tabpanel">
-                <div class="card p-4 mb-4">
-                    <h6 class="fw-semibold text-dark mb-3">Emergency Helplines</h6>
+                <div class="card p-3 p-md-4 mb-4 border shadow-sm bg-white">
+                    <h6 class="fw-semibold text-dark mb-3 d-flex align-items-center">
+                        <i class="bi bi-shield-fill-exclamation text-danger me-2 fs-5"></i>Emergency Helplines
+                    </h6>
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label small text-muted">Country</label>
                             <select id="emCountrySelect" class="form-select"></select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label small text-muted">State / Region</label>
                             <select id="emStateSelect" class="form-select"></select>
                         </div>
@@ -274,8 +395,8 @@
         </div>
     </div>
 
-    <!-- Floating Trip Cart Bar (Scoped only to Places discovery) -->
-    <div id="floatingCartBar" class="position-fixed bottom-0 start-50 translate-middle-x p-3 mb-3 bg-dark text-white rounded-4 shadow-lg d-none align-items-center justify-content-between gap-3" style="z-index: 1050; width: 90%; max-width: 580px;">
+    <!-- Floating Trip Cart Bar (Scoped to Places discovery on all viewports) -->
+    <div id="floatingCartBar" class="position-fixed bottom-0 start-50 translate-middle-x p-3 mb-3 bg-dark text-white rounded-4 shadow-lg d-none align-items-center justify-content-between gap-3 floating-cart-responsive" style="z-index: 1050; width: 90%; max-width: 580px;">
         <div class="d-flex align-items-center gap-2 overflow-hidden">
             <span class="badge bg-primary rounded-pill px-2 py-1 fs-6" id="floatingCartCount">0</span>
             <div class="text-truncate small text-white-50" id="floatingCartItems">Places selected</div>
@@ -293,5 +414,32 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Sync Desktop Nav-Pills and Mobile Section Selector Dropdown
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileSelect = document.getElementById('mobileNavSelect');
+            if (mobileSelect) {
+                // When mobile dropdown changes, trigger the corresponding Bootstrap Tab
+                mobileSelect.addEventListener('change', (e) => {
+                    const targetPaneId = e.target.value;
+                    const correspondingBtn = document.querySelector(`[data-bs-target="#${targetPaneId}"]`);
+                    if (correspondingBtn) {
+                        const tabInstance = bootstrap.Tab.getOrCreateInstance(correspondingBtn);
+                        tabInstance.show();
+                    }
+                });
+
+                // When desktop tabs are clicked, keep mobile dropdown in sync
+                document.querySelectorAll('#travelTab button[data-bs-toggle="tab"]').forEach(btn => {
+                    btn.addEventListener('shown.bs.tab', (e) => {
+                        const targetPane = e.target.getAttribute('data-bs-target').replace('#', '');
+                        if (mobileSelect) {
+                            mobileSelect.value = targetPane;
+                        }
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>
