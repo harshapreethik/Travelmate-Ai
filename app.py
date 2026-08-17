@@ -286,9 +286,9 @@ def vision_endpoint():
     try:
         image_bytes = None
         mime_type = "image/jpeg"
-        destination = "Global / Any Destination"
-        target_lang = "English"
-        user_query = ""
+        destination = request.form.get("destination", "Global / Any Destination")
+        target_lang = request.form.get("target_lang", "English")
+        user_query = request.form.get("user_query", "")
 
         if "file" in request.files:
             file = request.files["file"]
@@ -297,10 +297,6 @@ def vision_endpoint():
 
             image_bytes = file.read()
             mime_type = file.mimetype or "image/jpeg"
-            destination = request.form.get("destination", "Global / Any Destination")
-            target_lang = request.form.get("target_lang", "English")
-            user_query = request.form.get("user_query", "")
-
         elif request.is_json:
             data = request.get_json() or {}
             b64_str = data.get("image_base64", "")
@@ -319,29 +315,18 @@ def vision_endpoint():
             return jsonify({"status": "error", "message": "Invalid request format."}), 400
 
         image_svc = get_image_service()
-        
-        # Execute image analysis safely with target_lang support
-        try:
-            analysis_text = image_svc.analyze_image(
-                image_bytes=image_bytes,
-                mime_type=mime_type,
-                destination=destination,
-                target_lang=target_lang,
-                user_query=user_query
-            )
-        except TypeError:
-            analysis_text = image_svc.analyze_image(
-                image_bytes=image_bytes,
-                mime_type=mime_type,
-                destination=destination,
-                user_query=user_query
-            )
+        analysis_text = image_svc.analyze_image(
+            image_bytes=image_bytes,
+            mime_type=mime_type,
+            destination=destination,
+            target_lang=target_lang,
+            user_query=user_query
+        )
 
-        # Normalize dictionary response if returned as a dict object
-        if isinstance(analysis_text, dict):
-            return jsonify(analysis_text), 200
-
-        return jsonify({"status": "success", "analysis": analysis_text}), 200
+        return jsonify({
+            "status": "success",
+            "analysis": analysis_text
+        }), 200
 
     except Exception as e:
         logger.error(f"Error handling /api/vision request: {str(e)}", exc_info=True)
