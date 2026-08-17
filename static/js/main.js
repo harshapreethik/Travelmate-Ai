@@ -752,112 +752,188 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 6. EMERGENCY DIRECTORY
+    // 6. EMERGENCY DIRECTORY (Interactive Click-to-Call System)
     // -------------------------------------------------------------------
     const emCountrySelect = document.getElementById("emCountrySelect");
     const emStateSelect = document.getElementById("emStateSelect");
     const emOutput = document.getElementById("emergencyOutput");
-    let locationData = {};
 
-    async function initEmergencyDropdowns() {
-        if (!emCountrySelect || !emStateSelect) return;
-        try {
-            const res = await fetch("/api/emergency/locations");
-            const result = await res.json();
-            if (result.status === "success") {
-                locationData = result.data;
-                emCountrySelect.innerHTML = "";
-                
-                Object.keys(locationData).forEach(country => {
-                    const opt = document.createElement("option");
-                    opt.value = country;
-                    opt.textContent = country;
-                    if (country === "India") opt.selected = true;
-                    emCountrySelect.appendChild(opt);
-                });
-
-                updateStateDropdown();
-            }
-        } catch (err) {
-            console.error("Failed to load emergency location list", err);
+    // Comprehensive Emergency Directory Dataset
+    const EMERGENCY_DIRECTORY_DATA = {
+        "India": {
+            "Telangana (Hyderabad)": [
+                { title: "Unified Emergency (Police/Fire/Ambulance)", number: "112", icon: "bi-shield-check", desc: "Centralized all-in-one emergency dispatch" },
+                { title: "Hyderabad Police Control Room", number: "100", icon: "bi-shield-fill-exclamation", desc: "Immediate local police assistance" },
+                { title: "Ambulance & Trauma Care", number: "108", icon: "bi-hospital", desc: "Free emergency medical ambulance" },
+                { title: "Fire & Rescue Service", number: "101", icon: "bi-fire", desc: "Fire emergency and structural rescue" },
+                { title: "Telangana She Team (Women Safety)", number: "9490616555", icon: "bi-person-heart", desc: "24/7 women safety & immediate response" },
+                { title: "National Tourist Helpline", number: "1363", icon: "bi-headset", desc: "Toll-free multilingual tourist support" },
+                { title: "RGIA Airport Police Station", number: "040-27853418", icon: "bi-airplane-fill", desc: "Hyderabad international airport station" }
+            ],
+            "Andhra Pradesh (Amaravati / Vizag / Guntur)": [
+                { title: "AP Unified Emergency", number: "112", icon: "bi-shield-check", desc: "Statewide unified emergency response" },
+                { title: "AP Police Control Room", number: "100", icon: "bi-shield-fill-exclamation", desc: "Law enforcement dispatch" },
+                { title: "Medical Emergency Ambulance", number: "108", icon: "bi-hospital", desc: "24/7 trauma care and ambulance transport" },
+                { title: "Fire Services", number: "101", icon: "bi-fire", desc: "Fire accidents and rescue operations" },
+                { title: "Disha SOS Helpline", number: "112", icon: "bi-person-heart", desc: "Dedicated women protection emergency hotline" }
+            ],
+            "Maharashtra (Mumbai / Pune)": [
+                { title: "Maharashtra Emergency Unified", number: "112", icon: "bi-shield-check", desc: "All-in-one emergency helpline" },
+                { title: "Mumbai Police Control Room", number: "022-22621855", icon: "bi-shield-fill-exclamation", desc: "Direct Mumbai police dispatch" },
+                { title: "Ambulance Services", number: "108", icon: "bi-hospital", desc: "Medical emergencies" },
+                { title: "Mumbai Tourist Assistance", number: "022-22845678", icon: "bi-headset", desc: "MTDC tourist assistance desk" }
+            ],
+            "Delhi (NCR)": [
+                { title: "Delhi Central Emergency", number: "112", icon: "bi-shield-check", desc: "Unified police, medical, and fire dispatch" },
+                { title: "Delhi Tourist Police", number: "011-23365337", icon: "bi-headset", desc: "Dedicated tourist security & help desk" },
+                { title: "Delhi Medical Ambulance (CATS)", number: "102", icon: "bi-hospital", desc: "Centralized ambulance network" }
+            ],
+            "Karnataka (Bengaluru)": [
+                { title: "Bengaluru City Police", number: "112", icon: "bi-shield-check", desc: "Central command & dispatch" },
+                { title: "Emergency Ambulance", number: "108", icon: "bi-hospital", desc: "Trauma transport" },
+                { title: "Bengaluru Traffic Police Helpline", number: "080-22943030", icon: "bi-car-front", desc: "Traffic clearance & roadside help" }
+            ],
+            "Tamil Nadu (Chennai)": [
+                { title: "Tamil Nadu Emergency Unified", number: "112", icon: "bi-shield-check", desc: "State unified command" },
+                { title: "Chennai City Police", number: "100", icon: "bi-shield-fill-exclamation", desc: "Police assistance" },
+                { title: "Medical Emergency Ambulance", number: "108", icon: "bi-hospital", desc: "Trauma ambulance dispatch" }
+            ]
+        },
+        "United States": {
+            "National (All States / Major Cities)": [
+                { title: "Universal Emergency Number", number: "911", icon: "bi-shield-check", desc: "Immediate Police, Fire, and Ambulance dispatch" },
+                { title: "Non-Emergency City Services", number: "311", icon: "bi-info-circle-fill", desc: "Non-urgent city services & police records" },
+                { title: "National Poison Control Center", number: "1-800-222-1222", icon: "bi-capsule", desc: "24/7 toxic exposure & medical triage" },
+                { title: "Crisis & Suicide Lifeline", number: "988", icon: "bi-heart-pulse", desc: "24/7 confidential mental healthcare" }
+            ]
+        },
+        "United Kingdom": {
+            "National (London / UK Wide)": [
+                { title: "UK Emergency Services", number: "999", icon: "bi-shield-check", desc: "Police, Ambulance, Fire Brigade, Coastguard" },
+                { title: "European Emergency Line", number: "112", icon: "bi-shield-check", desc: "Universal European emergency line" },
+                { title: "NHS Non-Emergency Health Advice", number: "111", icon: "bi-hospital", desc: "Free medical advice when not a 999 emergency" },
+                { title: "Non-Emergency Police Report", number: "101", icon: "bi-shield-fill-exclamation", desc: "Report non-urgent incidents" }
+            ]
+        },
+        "United Arab Emirates": {
+            "National (Dubai / Abu Dhabi)": [
+                { title: "UAE Police Emergency", number: "999", icon: "bi-shield-check", desc: "Immediate police dispatch" },
+                { title: "Ambulance Dispatch", number: "998", icon: "bi-hospital", desc: "Emergency medical transport" },
+                { title: "Civil Defence (Fire Rescue)", number: "997", icon: "bi-fire", desc: "Fire accidents & rescue" },
+                { title: "Dubai Tourist Police", number: "901", icon: "bi-headset", desc: "Visitor assistance, lost items, and tourist inquiries" }
+            ]
+        },
+        "European Union": {
+            "Universal EU Coverage": [
+                { title: "Pan-European Universal Emergency", number: "112", icon: "bi-shield-check", desc: "Free emergency connection in all EU countries" }
+            ]
+        },
+        "Japan": {
+            "National (Tokyo / Osaka / Kyoto)": [
+                { title: "Japan Police Emergency", number: "110", icon: "bi-shield-fill-exclamation", desc: "Immediate police dispatch" },
+                { title: "Ambulance & Fire Service", number: "119", icon: "bi-hospital", desc: "Fire fighting and emergency medical transport" },
+                { title: "Japan Japan Helpline (English)", number: "0570-000-911", icon: "bi-headset", desc: "24-hour English emergency and consultation line" }
+            ]
         }
-    }
+    };
 
-    function updateStateDropdown() {
-        if (!emCountrySelect || !emStateSelect) return;
-        const selectedCountry = emCountrySelect.value;
-        const states = locationData[selectedCountry] || [];
-        emStateSelect.innerHTML = "";
+    function initEmergencySystem() {
+        if (!emCountrySelect || !emStateSelect || !emOutput) return;
 
-        states.forEach(state => {
+        // 1. Populate Countries
+        emCountrySelect.innerHTML = "";
+        Object.keys(EMERGENCY_DIRECTORY_DATA).forEach(country => {
             const opt = document.createElement("option");
-            opt.value = state;
-            opt.textContent = state;
-            if (state.includes("Hyderabad")) opt.selected = true;
-            emStateSelect.appendChild(opt);
+            opt.value = country;
+            opt.textContent = country;
+            if (country === "India") opt.selected = true;
+            emCountrySelect.appendChild(opt);
         });
 
-        loadEmergencyContacts();
-    }
+        // 2. Populate States / Cities on Country change
+        function updateStates() {
+            const country = emCountrySelect.value;
+            const states = EMERGENCY_DIRECTORY_DATA[country] || {};
+            emStateSelect.innerHTML = "";
 
-    async function loadEmergencyContacts() {
-        if (!emCountrySelect || !emStateSelect || !emOutput) return;
-        const country = emCountrySelect.value;
-        const state = emStateSelect.value;
-        if (!country || !state) return;
+            Object.keys(states).forEach(state => {
+                const opt = document.createElement("option");
+                opt.value = state;
+                opt.textContent = state;
+                if (state.includes("Hyderabad")) opt.selected = true;
+                emStateSelect.appendChild(opt);
+            });
 
-        try {
-            const res = await fetch(`/api/emergency?country=${encodeURIComponent(country)}&state=${encodeURIComponent(state)}`);
-            const json = await res.json();
+            renderHelplineCards();
+        }
 
-            if (json.status === "success") {
-                const c = json.data.contacts;
-                emOutput.innerHTML = `
-                    <div class="row g-3 my-2">
-                        <div class="col-6 col-md-3">
-                            <div class="p-3 bg-light rounded text-center border">
-                                <i class="bi bi-shield-fill text-danger fs-3"></i>
-                                <div class="small text-muted mt-1">Police</div>
-                                <div class="fw-bold fs-5 text-danger">${c.police || '112'}</div>
+        // 3. Render Helpline Cards with Click-to-Dial Action Buttons
+        function renderHelplineCards() {
+            const country = emCountrySelect.value;
+            const state = emStateSelect.value;
+            const contacts = (EMERGENCY_DIRECTORY_DATA[country] && EMERGENCY_DIRECTORY_DATA[country][state]) || [];
+
+            if (!contacts.length) {
+                emOutput.innerHTML = `<div class="p-3 text-muted border rounded bg-light">No records found. Dial universal emergency <strong>112</strong>.</div>`;
+                return;
+            }
+
+            let html = `
+                <div class="card p-3 p-md-4 border shadow-sm rounded-3 mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-dark m-0 d-flex align-items-center">
+                            <i class="bi bi-shield-fill-check text-danger me-2"></i>Verified Helplines: ${state}, ${country}
+                        </h6>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 small">Tap to Dial</span>
+                    </div>
+                    <div class="row g-3">
+            `;
+
+            contacts.forEach(item => {
+                const cleanPhone = item.number.replace(/[^0-9+]/g, '');
+
+                html += `
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 border rounded-3 bg-white h-100 d-flex flex-column justify-content-between shadow-xs">
+                            <div class="d-flex align-items-start gap-2 mb-2">
+                                <i class="bi ${item.icon} text-danger fs-4 mt-1"></i>
+                                <div>
+                                    <h6 class="fw-bold text-dark m-0">${item.title}</h6>
+                                    <small class="text-muted d-block">${item.desc}</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="p-3 bg-light rounded text-center border">
-                                <i class="bi bi-hospital-fill text-danger fs-3"></i>
-                                <div class="small text-muted mt-1">Ambulance</div>
-                                <div class="fw-bold fs-5 text-danger">${c.ambulance || '108'}</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="p-3 bg-light rounded text-center border">
-                                <i class="bi bi-fire text-danger fs-3"></i>
-                                <div class="small text-muted mt-1">Fire Service</div>
-                                <div class="fw-bold fs-5 text-danger">${c.fire || '101'}</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="p-3 bg-light rounded text-center border">
-                                <i class="bi bi-headset text-danger fs-3"></i>
-                                <div class="small text-muted mt-1">Tourist Line</div>
-                                <div class="fw-bold fs-5 text-danger">${c.tourist_helpline || '1363'}</div>
+                            <div class="pt-2 border-top mt-2 d-flex justify-content-between align-items-center">
+                                <span class="fs-5 fw-bold text-dark font-monospace">${item.number}</span>
+                                <a href="tel:${cleanPhone}" class="btn btn-danger btn-sm px-3 py-1.5 fw-semibold d-flex align-items-center gap-1 shadow-sm text-decoration-none">
+                                    <i class="bi bi-telephone-fill"></i>
+                                    <span>Call Now</span>
+                                </a>
                             </div>
                         </div>
                     </div>
-                    ${c.safety_note ? `
-                    <div class="p-3 bg-light rounded border-start border-danger border-4 mt-3">
-                        <h6 class="fw-bold text-danger mb-1"><i class="bi bi-info-circle me-1"></i>Regional Safety Advisory</h6>
-                        <p class="m-0 small text-dark">${c.safety_note}</p>
-                    </div>` : ''}
                 `;
-            }
-        } catch (err) {
-            emOutput.innerHTML = '<div class="alert alert-danger">Error loading emergency directory.</div>';
+            });
+
+            html += `
+                    </div>
+                    <div class="p-3 bg-light rounded border-start border-danger border-4 mt-4">
+                        <h6 class="fw-bold text-danger mb-1"><i class="bi bi-info-circle-fill me-1"></i>Safety Advisory</h6>
+                        <p class="m-0 small text-dark">Always keep emergency location sharing active on your phone while traveling. In extreme emergencies with no cellular data, SMS or direct voice calls on unified emergency numbers (112 / 911 / 999) work across any active cellular tower.</p>
+                    </div>
+                </div>
+            `;
+
+            emOutput.innerHTML = html;
         }
+
+        emCountrySelect.addEventListener("change", updateStates);
+        emStateSelect.addEventListener("change", renderHelplineCards);
+
+        // Initial trigger
+        updateStates();
     }
 
     if (emCountrySelect && emStateSelect) {
-        emCountrySelect.addEventListener("change", updateStateDropdown);
-        emStateSelect.addEventListener("change", loadEmergencyContacts);
-        initEmergencyDropdowns();
+        initEmergencySystem();
     }
 });
