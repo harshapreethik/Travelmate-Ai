@@ -14,12 +14,54 @@ from config import Config
 logger = logging.getLogger(__name__)
 
 
+def _clean_slot(slot, fallback_activity="Sightseeing"):
+    """Guarantees that each morning/afternoon/evening block is a valid dict with expected keys."""
+    if isinstance(slot, dict):
+        return {
+            "activity": slot.get("activity") or slot.get("name") or fallback_activity,
+            "description": slot.get("description") or slot.get("details") or "Explore local highlights.",
+            "duration": slot.get("duration") or "2.5 hrs"
+        }
+    elif isinstance(slot, str) and slot.strip():
+        return {
+            "activity": slot.strip(),
+            "description": "Explore local highlights.",
+            "duration": "2.5 hrs"
+        }
+    return {
+        "activity": fallback_activity,
+        "description": "Explore local highlights.",
+        "duration": "2.5 hrs"
+    }
+
+
+def _clean_dining(dining):
+    """Guarantees breakfast, lunch, and dinner keys exist."""
+    if isinstance(dining, dict):
+        return {
+            "breakfast": dining.get("breakfast") or "Traditional local breakfast & morning chai/coffee",
+            "lunch": dining.get("lunch") or "Regional specialty lunch & thali",
+            "dinner": dining.get("dinner") or "Signature dining or street food market"
+        }
+    elif isinstance(dining, str) and dining.strip():
+        return {
+            "breakfast": "Traditional morning breakfast",
+            "lunch": dining.strip(),
+            "dinner": "Signature local dinner"
+        }
+    return {
+        "breakfast": "Traditional local breakfast",
+        "lunch": "Regional lunch specialty",
+        "dinner": "Signature local dinner"
+    }
+
+
 class ItineraryService:
     def __init__(self):
         if not Config.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY is missing. Check your .env file.")
         self.client = genai.Client(api_key=Config.GEMINI_API_KEY)
-        self.active_model = "gemini-3.7-flash"
+        self.active_model = "gemini-2.5-flash"
 
     def generate_itinerary(
         self,
@@ -94,9 +136,9 @@ STRICT JSON OUTPUT FORMAT ONLY (no markdown code blocks, no intro text):
 
         candidate_models = [
             self.active_model,
-            "gemini-3.7-flash",
-            "gemini-3.5-flash",
-            "gemini-3.1-flash-lite",
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
             "gemini-flash-latest"
         ]
         candidate_models = list(dict.fromkeys(candidate_models))
@@ -116,17 +158,34 @@ STRICT JSON OUTPUT FORMAT ONLY (no markdown code blocks, no intro text):
                         raw = re.sub(r"\s*```$", "", raw)
 
                         parsed = json.loads(raw.strip())
-                        if "days" in parsed and len(parsed["days"]) > 0:
+                        raw_days = parsed.get("days") or []
+
+                        if isinstance(raw_days, list) and len(raw_days) > 0:
+                            clean_days = []
+                            for idx, d in enumerate(raw_days):
+                                clean_days.append({
+                                    "day_number": d.get("day_number", idx + 1),
+                                    "theme": d.get("theme", f"Day {idx + 1} Exploration"),
+                                    "morning": _clean_slot(d.get("morning"), "Morning Sightseeing"),
+                                    "afternoon": _clean_slot(d.get("afternoon"), "Afternoon Discovery"),
+                                    "evening": _clean_slot(d.get("evening"), "Evening Promenade"),
+                                    "dining_plan": _clean_dining(d.get("dining_plan")),
+                                    "pro_tip": d.get("pro_tip", "Start early to beat the daytime crowds.")
+                                })
+
+                            parsed["days"] = clean_days
+                            parsed["destination"] = parsed.get("destination") or destination
+                            parsed["num_days"] = parsed.get("num_days") or num_days
+                            parsed["budget_level"] = parsed.get("budget_level") or budget_level
                             self.active_model = model
                             return parsed
                 except Exception as e:
                     logger.warning(f"Itinerary model {model} failed: {e}")
                     if "503" in str(e) or "UNAVAILABLE" in str(e):
-                        time.sleep(1.5)
+                        time.sleep(1.2)
                         continue
                     break
 
-        # Fallback with complete food schedule and routine integration
         fallback_places = selected_places or ["Historic Landmarks", "Local Bazaar", "Cultural Museum"]
         return {
             "destination": destination,
