@@ -2,20 +2,80 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TravelMate AI</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Mobile-first Navigation Pill Bar */
+        .nav-pills-container {
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            padding: 4px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            gap: 6px;
+        }
+        .nav-pills-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari */
+        }
+        .nav-pills-container .nav-item {
+            flex: 0 0 auto;
+        }
+        @media (min-width: 768px) {
+            .nav-pills-container {
+                display: flex;
+                width: 100%;
+            }
+            .nav-pills-container .nav-item {
+                flex: 1 1 0;
+            }
+        }
+        .nav-pills .nav-link {
+            white-space: nowrap;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: #475569;
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: all 0.15s ease;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .suggestion-pill {
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .suggestion-pill:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-white">
 
     <!-- Header Navigation -->
-    <nav class="navbar navbar-expand-lg px-4 py-3 sticky-top">
+    <nav class="navbar navbar-expand-lg px-3 px-md-4 py-3 sticky-top bg-white border-bottom">
         <div class="container-fluid max-w-screen-lg mx-auto p-0" style="max-width: 900px;">
-            <a class="navbar-brand fw-semibold d-flex align-items-center" href="#">
+            <a class="navbar-brand fw-semibold d-flex align-items-center m-0" href="#">
                 <i class="bi bi-compass-fill text-dark me-2 fs-5"></i>
                 <span>TravelMate AI</span>
             </a>
@@ -24,56 +84,56 @@
     </nav>
 
     <!-- Main Container -->
-    <div class="container my-4" style="max-width: 900px;">
+    <div class="container my-3 my-md-4" style="max-width: 900px;">
         
-        <!-- Navigation Tabs -->
-        <ul class="nav nav-pills nav-fill mb-4" id="travelTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pane" type="button" role="tab">
-                    Chat
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="recs-tab" data-bs-toggle="tab" data-bs-target="#recs-pane" type="button" role="tab">
-                    Recommendations
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="itin-tab" data-bs-toggle="tab" data-bs-target="#itin-pane" type="button" role="tab">
-                    Itinerary <span id="cartCountBadge" class="badge bg-dark ms-1 rounded-pill d-none">0</span>
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="vision-tab" data-bs-toggle="tab" data-bs-target="#vision-pane" type="button" role="tab">
-                    Vision OCR
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="trans-tab" data-bs-toggle="tab" data-bs-target="#trans-pane" type="button" role="tab">
-                    Translator
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="emergency-tab" data-bs-toggle="tab" data-bs-target="#emergency-pane" type="button" role="tab">
-                    Emergency
-                </button>
-            </li>
-        </ul>
+        <!-- Navigation Tabs (Horizontally swipeable on mobile, full-width on desktop) -->
+        <div class="mb-4">
+            <ul class="nav nav-pills nav-pills-container" id="travelTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link w-100 active text-center" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pane" type="button" role="tab">
+                        Chat
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link w-100 text-center" id="recs-tab" data-bs-toggle="tab" data-bs-target="#recs-pane" type="button" role="tab">
+                        Recommendations
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link w-100 text-center" id="itin-tab" data-bs-toggle="tab" data-bs-target="#itin-pane" type="button" role="tab">
+                        Itinerary <span id="cartCountBadge" class="badge bg-dark ms-1 rounded-pill d-none">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link w-100 text-center" id="vision-tab" data-bs-toggle="tab" data-bs-target="#vision-pane" type="button" role="tab">
+                        Vision OCR
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link w-100 text-center" id="trans-tab" data-bs-toggle="tab" data-bs-target="#trans-pane" type="button" role="tab">
+                        Translator
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link w-100 text-center" id="emergency-tab" data-bs-toggle="tab" data-bs-target="#emergency-pane" type="button" role="tab">
+                        Emergency
+                    </button>
+                </li>
+            </ul>
+        </div>
 
         <!-- Tab Content Panes -->
         <div class="tab-content" id="travelTabContent">
             
-            <!-- ========================================================= -->
-            <!-- 1. CHAT ASSISTANT                                         -->
-            <!-- ========================================================= -->
+            <!-- 1. CHAT ASSISTANT -->
             <div class="tab-pane fade show active" id="chat-pane" role="tabpanel">
-                <div class="card border-0 p-4">
+                <div class="card border p-3 p-md-4 mb-4 shadow-sm rounded-3">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="fw-semibold text-dark m-0">Travel Assistant</h6>
                     </div>
                     
-                    <div id="chatWindow" class="chat-window p-3 mb-3" style="height: 420px; overflow-y: auto;">
-                        <div class="chat-bubble bot">
+                    <div id="chatWindow" class="chat-window p-3 mb-3 bg-light rounded-3" style="height: 420px; overflow-y: auto;">
+                        <div class="chat-bubble bot bg-white p-3 rounded-3 shadow-sm border mb-2" style="max-width: 85%;">
                             How can I help you plan or navigate your journey today?
                         </div>
                     </div>
@@ -87,24 +147,22 @@
 
                     <form id="chatForm" class="d-flex gap-2">
                         <input type="text" id="chatInput" class="form-control" placeholder="Ask a question or request travel advice..." required autocomplete="off">
-                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-arrow-up"></i></button>
+                        <button type="submit" class="btn btn-primary px-3 px-md-4"><i class="bi bi-arrow-up"></i></button>
                     </form>
                 </div>
             </div>
 
-            <!-- ========================================================= -->
-            <!-- 2. PLACES / RECOMMENDATIONS                               -->
-            <!-- ========================================================= -->
+            <!-- 2. PLACES / RECOMMENDATIONS -->
             <div class="tab-pane fade" id="recs-pane" role="tabpanel">
-                <div class="card p-4 mb-4">
+                <div class="card p-3 p-md-4 mb-4 border shadow-sm rounded-3">
                     <h6 class="fw-semibold text-dark mb-3">Discover Places</h6>
                     <form id="recommendationForm">
                         <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label small text-muted">Destination</label>
                                 <input type="text" id="recDestination" class="form-control" value="Hyderabad" required>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-6 col-md-3">
                                 <label class="form-label small text-muted">Traveler Type</label>
                                 <select id="recTravellerType" class="form-select">
                                     <option value="Solo">Solo Explorer</option>
@@ -113,14 +171,14 @@
                                     <option value="Friends">Friends Group</option>
                                 </select>
                             </div>
-                            <div class="col-md-5">
+                            <div class="col-6 col-md-5">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label class="form-label small text-muted m-0">Max Cost Per Spot</label>
                                     <span id="recBudgetDisplay" class="small fw-semibold text-dark">₹1,500</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <input type="range" class="form-range" id="recBudgetSlider" min="0" max="10000" step="250" value="1500">
-                                    <div class="input-group input-group-sm" style="max-width: 110px;">
+                                    <div class="input-group input-group-sm" style="max-width: 105px;">
                                         <span class="input-group-text">₹</span>
                                         <input type="number" class="form-control" id="recBudgetInput" min="0" step="250" value="1500">
                                     </div>
@@ -128,7 +186,7 @@
                             </div>
                         </div>
 
-                        <!-- Custom Free-Text Activities & Preferences -->
+                        <!-- Custom Activities -->
                         <div class="mb-3">
                             <label class="form-label small text-muted">Specific Preferences & Custom Activities</label>
                             <input type="text" id="recCustomInterests" class="form-control" placeholder="e.g., Gym / workouts, standup comedy shows, live concerts, midnight cafes">
@@ -144,21 +202,19 @@
                                 <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Nightlife & Entertainment" id="cbEvents"><label class="form-check-label small" for="cbEvents">Shows & Events</label></div>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Find Places</button>
+                        <button type="submit" class="btn btn-primary w-100 w-md-auto">Find Places</button>
                     </form>
                 </div>
                 <div id="recommendationsOutput"></div>
             </div>
 
-            <!-- ========================================================= -->
-            <!-- 3. ITINERARY BUILDER                                      -->
-            <!-- ========================================================= -->
+            <!-- 3. ITINERARY BUILDER -->
             <div class="tab-pane fade" id="itin-pane" role="tabpanel">
-                <div class="card p-4 mb-4">
+                <div class="card p-3 p-md-4 mb-4 border shadow-sm rounded-3">
                     <h6 class="fw-semibold text-dark mb-3">Generate Custom Itinerary with Food Plan</h6>
                     <form id="itineraryForm">
                         
-                        <!-- Pinned Places in Cart Tray -->
+                        <!-- Pinned Places in Cart -->
                         <div id="cartTrayContainer" class="p-3 mb-3 bg-light rounded border d-none">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="small fw-semibold text-dark"><i class="bi bi-cart3 text-primary me-1"></i>Selected Spots in Your Trip Cart:</span>
@@ -168,22 +224,22 @@
                         </div>
 
                         <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label small text-muted">Destination</label>
                                 <input type="text" id="itinDestination" class="form-control" value="Hyderabad" required>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-6 col-md-3">
                                 <label class="form-label small text-muted">Duration (Days)</label>
                                 <input type="number" id="itinDays" class="form-control" min="1" max="14" value="2" required>
                             </div>
-                            <div class="col-md-5">
+                            <div class="col-6 col-md-5">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label class="form-label small text-muted m-0">Total Trip Budget</label>
                                     <span id="budgetDisplay" class="small fw-semibold text-dark">₹5,000 (Comfort)</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <input type="range" class="form-range" id="itinBudgetSlider" min="1000" max="50000" step="500" value="5000">
-                                    <div class="input-group input-group-sm" style="max-width: 110px;">
+                                    <div class="input-group input-group-sm" style="max-width: 105px;">
                                         <span class="input-group-text">₹</span>
                                         <input type="number" class="form-control" id="itinBudgetInput" min="500" step="500" value="5000">
                                     </div>
@@ -192,7 +248,7 @@
                         </div>
 
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label small text-muted">Travel Style</label>
                                 <select id="itinStyle" class="form-select">
                                     <option value="Solo Explorer">Solo Explorer</option>
@@ -201,22 +257,20 @@
                                     <option value="Couple">Couple</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label small text-muted">Daily Routine / Events (Optional)</label>
                                 <input type="text" id="itinCustomSchedule" class="form-control" placeholder="e.g., Include 7 AM Gym, late night concerts">
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Generate Scheduled Plan & Meals</button>
+                        <button type="submit" class="btn btn-primary w-100 w-md-auto">Generate Scheduled Plan & Meals</button>
                     </form>
                 </div>
                 <div id="itineraryOutput"></div>
             </div>
 
-            <!-- ========================================================= -->
-            <!-- 4. VISION / MENU OCR                                      -->
-            <!-- ========================================================= -->
+            <!-- 4. VISION / MENU OCR -->
             <div class="tab-pane fade" id="vision-pane" role="tabpanel">
-                <div class="card p-4 mb-4">
+                <div class="card p-3 p-md-4 mb-4 border shadow-sm rounded-3">
                     <h6 class="fw-semibold text-dark mb-3">Visual Analysis & OCR</h6>
                     <form id="visionForm">
                         <div class="mb-3">
@@ -224,55 +278,47 @@
                             <input type="file" id="visionFile" class="form-control" accept="image/*" required>
                         </div>
                         <div class="mb-3 text-center" id="imagePreviewContainer" style="display: none;">
-                            <img id="imagePreview" src="" alt="Preview" class="img-thumbnail rounded" style="max-height: 240px;">
+                            <img id="imagePreview" src="" alt="Preview" class="img-thumbnail rounded shadow-sm" style="max-height: 240px;">
                         </div>
                         <div class="row g-2 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label small text-muted">Translate Extracted Text To</label>
                                 <select id="visionTargetLang" class="form-select">
-                                    <option value="English" selected>English</option>
-                                    <option value="Telugu">Telugu (తెలుగు)</option>
-                                    <option value="Hindi">Hindi (हिन्दी)</option>
-                                    <option value="Tamil">Tamil (தமிழ்)</option>
-                                    <option value="Spanish">Spanish (Español)</option>
-                                    <option value="Japanese">Japanese (日本語)</option>
-                                    <option value="French">French (Français)</option>
+                                    <option value="Telugu (తెలుగు)" selected>Telugu (తెలుగు)</option>
+                                    <option value="English">English</option>
+                                    <option value="Hindi (हिन्दी)">Hindi (हिन्दी)</option>
+                                    <option value="Tamil (தமிழ்)">Tamil (தமிழ்)</option>
+                                    <option value="Spanish (Español)">Spanish (Español)</option>
+                                    <option value="Japanese (日本語)">Japanese (日本語)</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label small text-muted">Specific Instructions (Optional)</label>
-                                <input type="text" id="visionQuery" class="form-control" placeholder="e.g., Identify vegetarian options or translate key text">
+                                <input type="text" id="visionQuery" class="form-control" placeholder="e.g., Translate dishes and identify veg items">
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Analyze Image</button>
+                        <button type="submit" class="btn btn-primary w-100 w-md-auto">Analyze Image</button>
                     </form>
                 </div>
                 <div id="visionOutput"></div>
             </div>
 
-            <!-- ========================================================= -->
-            <!-- 5. TRANSLATOR                                             -->
-            <!-- ========================================================= -->
+            <!-- 5. TRANSLATOR -->
             <div class="tab-pane fade" id="trans-pane" role="tabpanel">
-                <div class="card p-4 mb-4">
+                <div class="card p-3 p-md-4 mb-4 border shadow-sm rounded-3">
                     <h6 class="fw-semibold text-dark mb-3">Travel Translator</h6>
                     
-                    <!-- Language Selection Bar -->
+                    <!-- Language Selection Toolbar -->
                     <div class="row g-2 align-items-center mb-3">
                         <div class="col-5">
                             <label class="form-label small text-muted mb-1">From</label>
                             <select id="transSourceLang" class="form-select form-select-sm">
-                                <option value="auto" selected>🌐 Auto Detect Language</option>
+                                <option value="auto" selected>🌐 Auto Detect</option>
                                 <option value="English">English</option>
                                 <option value="Telugu">Telugu (తెలుగు / Tanglish)</option>
                                 <option value="Hindi">Hindi (हिन्दी / Hinglish)</option>
                                 <option value="Tamil">Tamil (தமிழ்)</option>
-                                <option value="Kannada">Kannada (ಕನ್ನಡ)</option>
                                 <option value="Spanish">Spanish (Español)</option>
-                                <option value="French">French (Français)</option>
-                                <option value="German">German (Deutsch)</option>
-                                <option value="Japanese">Japanese (日本語)</option>
-                                <option value="Arabic">Arabic (العربية)</option>
                             </select>
                         </div>
                         <div class="col-2 text-center pt-3">
@@ -287,12 +333,7 @@
                                 <option value="Hindi">Hindi (हिन्दी)</option>
                                 <option value="English">English</option>
                                 <option value="Tamil">Tamil (தமிழ்)</option>
-                                <option value="Kannada">Kannada (ಕನ್ನಡ)</option>
                                 <option value="Spanish">Spanish (Español)</option>
-                                <option value="French">French (Français)</option>
-                                <option value="German">German (Deutsch)</option>
-                                <option value="Japanese">Japanese (日本語)</option>
-                                <option value="Arabic">Arabic (العربية)</option>
                             </select>
                         </div>
                     </div>
@@ -312,24 +353,22 @@
                                 <button type="button" id="transMicBtn" class="btn btn-outline-secondary" title="Speech to text"><i class="bi bi-mic"></i></button>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Translate</button>
+                        <button type="submit" class="btn btn-primary w-100 w-md-auto">Translate</button>
                     </form>
                 </div>
                 <div id="translateOutput"></div>
             </div>
 
-            <!-- ========================================================= -->
-            <!-- 6. EMERGENCY DIRECTORY                                    -->
-            <!-- ========================================================= -->
+            <!-- 6. EMERGENCY DIRECTORY -->
             <div class="tab-pane fade" id="emergency-pane" role="tabpanel">
-                <div class="card p-4 mb-4">
+                <div class="card p-3 p-md-4 mb-4 border shadow-sm rounded-3">
                     <h6 class="fw-semibold text-dark mb-3">Emergency Helplines</h6>
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label small text-muted">Country</label>
                             <select id="emCountrySelect" class="form-select"></select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label small text-muted">State / Region</label>
                             <select id="emStateSelect" class="form-select"></select>
                         </div>
@@ -341,7 +380,7 @@
         </div>
     </div>
 
-    <!-- Floating Trip Cart Bar (Sticky Dock on Places Tab) -->
+    <!-- Floating Trip Cart Bar -->
     <div id="floatingCartBar" class="position-fixed bottom-0 start-50 translate-middle-x p-3 mb-3 bg-dark text-white rounded-4 shadow-lg d-none align-items-center justify-content-between gap-3" style="z-index: 1050; width: 90%; max-width: 580px;">
         <div class="d-flex align-items-center gap-2 overflow-hidden">
             <span class="badge bg-primary rounded-pill px-2 py-1 fs-6" id="floatingCartCount">0</span>

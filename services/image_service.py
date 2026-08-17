@@ -3,6 +3,7 @@ TravelMate AI — Image & Vision Analysis Service
 Extracts menus, signboards, and landmarks with multilingual translation.
 """
 
+import base64
 import logging
 import time
 from google import genai
@@ -17,12 +18,11 @@ class ImageService:
         if not Config.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY is missing. Check your .env file.")
         self.client = genai.Client(api_key=Config.GEMINI_API_KEY)
-        self.active_model = "gemini-2.5-flash"
+        self.active_model = "gemini-2.0-flash"
         self.candidate_models = [
-            "gemini-2.5-flash",
             "gemini-2.0-flash",
             "gemini-1.5-flash",
-            "gemini-flash-latest"
+            "gemini-1.5-pro"
         ]
 
     def analyze_image(
@@ -30,54 +30,63 @@ class ImageService:
         image_bytes: bytes,
         mime_type: str = "image/jpeg",
         destination: str = "Global / Any Destination",
-        target_lang: str = "English",
+        target_lang: str = "Telugu",
         user_query: str = ""
     ) -> str:
-        # Normalize webp/octet-stream mime types
-        safe_mime = mime_type if mime_type and mime_type.startswith("image/") else "image/jpeg"
+        safe_mime = mime_type if (mime_type and "/" in mime_type) else "image/jpeg"
 
         prompt = f"""
-You are TravelMate AI's visual intelligence and OCR engine.
+You are TravelMate AI's expert visual intelligence and OCR engine.
 Context / Destination: {destination}
-Target Translation Language: {target_lang}
-User Instructions: {user_query if user_query else 'Analyze this image in detail for a traveler.'}
+Target Language for Output: {target_lang}
+User Instructions: {user_query if user_query else 'Extract and translate all text, dishes, and categories.'}
 
 TASK:
-1. Extract and transcribe all visible text from the image (menu items, prices, signboard directions, or landmark names).
-2. If it is a food menu:
-   - Categorize clearly into Vegetarian (🟢) and Non-Vegetarian (🔴) items.
-   - List the dishes, key ingredients, and prices.
-   - Translate the dish names and descriptions into {target_lang}.
-3. If it is a signboard or landmark, provide historical context and visitor advice.
-4. Format the output cleanly in Markdown with bold titles, clean bullet points, and pricing.
+1. Extract and transcribe all visible items from the image (dishes, prices, ingredients, or signboards).
+2. If this is a food menu:
+   - Identify which items are strictly Vegetarian (🟢) vs Non-Vegetarian (🔴).
+   - Translate all dish names, sections, and descriptions into {target_lang}.
+   - Include prices alongside the items.
+3. If this is a signboard or landmark, provide history and traveler tips in {target_lang}.
+4. Output strictly in clean Markdown format with bold titles and structured bullet points.
 """
 
+        # Build image part using multiple SDK-safe approaches
+        image_part = None
+        try:
+            image_part = types.Part.from_bytes(data=image_bytes, mime_type=safe_mime)
+        except Exception:
+            try:
+                image_part = types.Part(inline_data=types.Blob(data=image_bytes, mime_type=safe_mime))
+            except Exception:
+                image_part = {
+                    "inline_data": {
+                        "mime_type": safe_mime,
+                        "data": base64.b64encode(image_bytes).decode("utf-8")
+                    }
+                }
+
+        last_error = ""
         for model in self.candidate_models:
             for attempt in range(2):
                 try:
                     logger.info(f"Analyzing vision image with ({model}) [Attempt {attempt + 1}]")
                     response = self.client.models.generate_content(
                         model=model,
-                        contents=[
-                            types.Part.from_bytes(data=image_bytes, mime_type=safe_mime),
-                            prompt
-                        ]
+                        contents=[image_part, prompt]
                     )
                     if response and response.text:
                         self.active_model = model
                         return response.text.strip()
                 except Exception as e:
-                    logger.warning(f"Vision model {model} failed: {e}")
-                    if "503" in str(e) or "UNAVAILABLE" in str(e):
-                        time.sleep(1.2)
+                    last_error = str(e)
+                    logger.warning(f"Vision model {model} attempt {attempt + 1} failed: {last_error}")
+                    if "503" in last_error or "UNAVAILABLE" in last_error:
+                        time.sleep(1.5)
                         continue
                     break
 
-        return (
-            "### Menu & Visual Analysis\n\n"
-            "* **Status:** Image processed.\n"
-            "* **Note:** Visual service is temporarily busy. Please try uploading the image again in a moment."
-        )
+        return f"* **Error:** Unable to complete visual analysis.\n* **Details:** {last_error}"
 
 
 _image_service = None
