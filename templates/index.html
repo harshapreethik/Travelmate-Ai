@@ -3,284 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TravelMate AI — Minimal Smart Travel Companion</title>
-    <!-- Bootstrap 5.3 CSS -->
+    <title>TravelMate AI</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        :root {
-            --background: #fafafa;
-            --foreground: #09090b;
-            --card: #ffffff;
-            --card-foreground: #09090b;
-            --muted: #f4f4f5;
-            --muted-foreground: #71717a;
-            --border: #e4e4e7;
-            --input: #e4e4e7;
-            --primary: #18181b;
-            --primary-foreground: #fafafa;
-            --accent: #f4f4f5;
-            --accent-foreground: #18181b;
-            --ring: #18181b;
-            --radius: 0.5rem;
-        }
-
-        body {
-            background-color: var(--background);
-            color: var(--foreground);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .navbar {
-            background-color: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(8px);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .card {
-            background-color: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-            transition: border-color 0.15s ease, box-shadow 0.15s ease;
-        }
-
-        .nav-pills .nav-link {
-            color: var(--muted-foreground);
-            font-weight: 500;
-            font-size: 0.875rem;
-            padding: 0.5rem 0.85rem;
-            border-radius: calc(var(--radius) - 2px);
-            transition: all 0.15s ease-in-out;
-        }
-
-        .nav-pills .nav-link:hover {
-            color: var(--foreground);
-            background-color: var(--muted);
-        }
-
-        .nav-pills .nav-link.active {
-            background-color: var(--primary);
-            color: var(--primary-foreground);
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-        }
-
-        .form-control, .form-select {
-            border: 1px solid var(--input);
-            border-radius: calc(var(--radius) - 2px);
-            font-size: 0.875rem;
-            background-color: var(--card);
-            color: var(--foreground);
-            padding: 0.55rem 0.75rem;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--ring);
-            box-shadow: 0 0 0 1px var(--ring);
-            outline: none;
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
-            border-color: var(--primary);
-            color: var(--primary-foreground);
-            border-radius: calc(var(--radius) - 2px);
-            font-weight: 500;
-            font-size: 0.875rem;
-            padding: 0.55rem 1rem;
-            transition: opacity 0.15s ease;
-        }
-
-        .btn-primary:hover, .btn-primary:focus {
-            background-color: #27272a;
-            border-color: #27272a;
-            color: #ffffff;
-        }
-
-        .btn-outline-secondary {
-            border-color: var(--border);
-            color: var(--foreground);
-            background-color: var(--card);
-            border-radius: calc(var(--radius) - 2px);
-        }
-
-        .btn-outline-secondary:hover {
-            background-color: var(--muted);
-            border-color: var(--border);
-            color: var(--foreground);
-        }
-
-        .suggestion-pill {
-            border: 1px solid var(--border);
-            background: var(--card);
-            border-radius: 9999px;
-            padding: 0.35rem 0.85rem;
-            font-size: 0.78rem;
-            font-weight: 500;
-            color: var(--muted-foreground);
-            cursor: pointer;
-            transition: all 0.15s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .suggestion-pill:hover {
-            color: var(--foreground);
-            background-color: var(--muted);
-            border-color: #d4d4d8;
-        }
-
-        .chat-window {
-            background-color: #fafafa;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-        }
-
-        .chat-bubble {
-            padding: 0.75rem 1rem;
-            border-radius: var(--radius);
-            font-size: 0.875rem;
-            line-height: 1.5;
-            margin-bottom: 0.75rem;
-            max-width: 85%;
-        }
-
-        .chat-bubble.bot {
-            background-color: #ffffff;
-            border: 1px solid var(--border);
-            color: var(--foreground);
-            align-self: flex-start;
-        }
-
-        .chat-bubble.user {
-            background-color: var(--primary);
-            color: var(--primary-foreground);
-            margin-left: auto;
-        }
-
-        .cursor-pointer {
-            cursor: pointer;
-        }
-    </style>
 </head>
 <body>
 
-    <!-- Header / Navbar -->
+    <!-- Header Navigation -->
     <nav class="navbar navbar-expand-lg px-4 py-3 sticky-top">
         <div class="container-fluid max-w-screen-lg mx-auto p-0" style="max-width: 900px;">
-            <a class="navbar-brand fw-bold d-flex align-items-center tracking-tight" href="#">
+            <a class="navbar-brand fw-semibold d-flex align-items-center" href="#">
                 <i class="bi bi-compass-fill text-dark me-2 fs-5"></i>
-                <span class="fs-6">TravelMate AI</span>
+                <span>TravelMate AI</span>
             </a>
-            <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-light text-secondary border px-2.5 py-1.5 font-monospace small">v1.0 • shadcn minimal</span>
-            </div>
+            <span class="text-secondary small">Companion</span>
         </div>
     </nav>
 
-    <!-- Main Viewport Container -->
+    <!-- Main Container -->
     <div class="container my-4" style="max-width: 900px;">
         
-        <!-- Navigation Section Tabs -->
-        <ul class="nav nav-pills nav-fill mb-4 p-1 bg-light rounded border" id="travelTab" role="tablist">
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-pills nav-fill mb-4" id="travelTab" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pane" type="button" role="tab" aria-controls="chat-pane" aria-selected="true">
-                    <i class="bi bi-chat-square-text me-1.5"></i>Chat
+                <button class="nav-link active" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pane" type="button" role="tab">
+                    Chat
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="recs-tab" data-bs-toggle="tab" data-bs-target="#recs-pane" type="button" role="tab" aria-controls="recs-pane" aria-selected="false">
-                    <i class="bi bi-geo-alt me-1.5"></i>Places
+                <button class="nav-link" id="recs-tab" data-bs-toggle="tab" data-bs-target="#recs-pane" type="button" role="tab">
+                    Recommendations
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="itin-tab" data-bs-toggle="tab" data-bs-target="#itin-pane" type="button" role="tab" aria-controls="itin-pane" aria-selected="false">
-                    <i class="bi bi-calendar-week me-1.5"></i>Itinerary <span id="cartCountBadge" class="badge bg-dark text-white ms-1 rounded-pill d-none">0</span>
+                <button class="nav-link" id="itin-tab" data-bs-toggle="tab" data-bs-target="#itin-pane" type="button" role="tab">
+                    Itinerary <span id="cartCountBadge" class="badge bg-dark ms-1 rounded-pill d-none">0</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="vision-tab" data-bs-toggle="tab" data-bs-target="#vision-pane" type="button" role="tab" aria-controls="vision-pane" aria-selected="false">
-                    <i class="bi bi-camera me-1.5"></i>Vision OCR
+                <button class="nav-link" id="vision-tab" data-bs-toggle="tab" data-bs-target="#vision-pane" type="button" role="tab">
+                    Vision OCR
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="trans-tab" data-bs-toggle="tab" data-bs-target="#trans-pane" type="button" role="tab" aria-controls="trans-pane" aria-selected="false">
-                    <i class="bi bi-translate me-1.5"></i>Translator
+                <button class="nav-link" id="trans-tab" data-bs-toggle="tab" data-bs-target="#trans-pane" type="button" role="tab">
+                    Translator
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="emergency-tab" data-bs-toggle="tab" data-bs-target="#emergency-pane" type="button" role="tab" aria-controls="emergency-pane" aria-selected="false">
-                    <i class="bi bi-shield-check me-1.5"></i>Emergency
+                <button class="nav-link" id="emergency-tab" data-bs-toggle="tab" data-bs-target="#emergency-pane" type="button" role="tab">
+                    Emergency
                 </button>
             </li>
         </ul>
 
-        <!-- Main Tab Pane Contents -->
+        <!-- Tab Content Panes -->
         <div class="tab-content" id="travelTabContent">
             
             <!-- ========================================================= -->
-            <!-- SECTION 1: CONVERSATIONAL TRAVEL ASSISTANT               -->
+            <!-- 1. CHAT ASSISTANT                                         -->
             <!-- ========================================================= -->
-            <div class="tab-pane fade show active" id="chat-pane" role="tabpanel" aria-labelledby="chat-tab">
-                <div class="card p-4 mb-4">
+            <div class="tab-pane fade show active" id="chat-pane" role="tabpanel">
+                <div class="card border-0 p-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h6 class="fw-semibold text-dark m-0">Travel Assistant</h6>
-                            <small class="text-muted">Universal multilingual companion with zero-configuration script auto-matching.</small>
-                        </div>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 small">Online</span>
+                        <h6 class="fw-semibold text-dark m-0">Travel Assistant</h6>
                     </div>
                     
-                    <!-- Chat Message Area -->
-                    <div id="chatWindow" class="chat-window p-3 mb-3 d-flex flex-column" style="height: 440px; overflow-y: auto;">
+                    <div id="chatWindow" class="chat-window p-3 mb-3" style="height: 420px; overflow-y: auto;">
                         <div class="chat-bubble bot">
-                            Hello! I am your AI travel companion. Ask me anything about itineraries, local food spots, transit tips, or regional culture in any language or transliteration (Telugu, Tanglish, Hindi, Hinglish, Spanish, etc.).
+                            How can I help you plan or navigate your journey today?
                         </div>
                     </div>
 
-                    <!-- Suggestion Prompt Pills -->
+                    <!-- Suggestion Prompts -->
                     <div class="d-flex flex-wrap gap-2 mb-3">
-                        <button type="button" class="suggestion-pill" data-prompt="Top hidden spots and architecture to visit in Hyderabad">🏛️ Top spots in Hyderabad</button>
-                        <button type="button" class="suggestion-pill" data-prompt="Must-try authentic dishes and best local eateries in Hyderabad">🍲 Must-try food guide</button>
-                        <button type="button" class="suggestion-pill" data-prompt="Best public transit & metro options from Hyderabad airport to city center">🚇 Airport transit advice</button>
-                        <button type="button" class="suggestion-pill" data-prompt="Hyderabad lo 2 days trip plan cheppu with food spots">🗣️ Tanglish 2-Day Plan</button>
+                        <button type="button" class="suggestion-pill" data-prompt="Top hidden spots to visit in Hyderabad">Top spots in Hyderabad</button>
+                        <button type="button" class="suggestion-pill" data-prompt="Must-try local dishes and best eateries">Must-try food guide</button>
+                        <button type="button" class="suggestion-pill" data-prompt="Public transit options from airport to city center">Airport transit advice</button>
                     </div>
 
-                    <!-- Chat Input Form -->
                     <form id="chatForm" class="d-flex gap-2">
                         <input type="text" id="chatInput" class="form-control" placeholder="Ask a question or request travel advice..." required autocomplete="off">
-                        <button type="submit" class="btn btn-primary px-4 d-flex align-items-center gap-1">
-                            <span>Send</span><i class="bi bi-arrow-up-short fs-5"></i>
-                        </button>
+                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-arrow-up"></i></button>
                     </form>
                 </div>
             </div>
 
             <!-- ========================================================= -->
-            <!-- SECTION 2: PLACES & SPOT DISCOVERY                        -->
+            <!-- 2. PLACES / RECOMMENDATIONS                               -->
             <!-- ========================================================= -->
-            <div class="tab-pane fade" id="recs-pane" role="tabpanel" aria-labelledby="recs-tab">
+            <div class="tab-pane fade" id="recs-pane" role="tabpanel">
                 <div class="card p-4 mb-4">
-                    <div class="mb-3">
-                        <h6 class="fw-semibold text-dark m-0">Discover Places</h6>
-                        <small class="text-muted">Filter curated locations by budget threshold, traveler persona, and bespoke activities.</small>
-                    </div>
+                    <h6 class="fw-semibold text-dark mb-3">Discover Places</h6>
                     <form id="recommendationForm">
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label small text-muted">Destination City</label>
+                                <label class="form-label small text-muted">Destination</label>
                                 <input type="text" id="recDestination" class="form-control" value="Hyderabad" required>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label small text-muted">Traveler Persona</label>
+                                <label class="form-label small text-muted">Traveler Type</label>
                                 <select id="recTravellerType" class="form-select">
                                     <option value="Solo">Solo Explorer</option>
-                                    <option value="Family">Family Vacation</option>
-                                    <option value="Couples">Couple / Leisure</option>
+                                    <option value="Family">Family</option>
+                                    <option value="Couples">Couple</option>
                                     <option value="Friends">Friends Group</option>
                                 </select>
                             </div>
@@ -291,44 +120,28 @@
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <input type="range" class="form-range" id="recBudgetSlider" min="0" max="10000" step="250" value="1500">
-                                    <div class="input-group input-group-sm" style="max-width: 115px;">
-                                        <span class="input-group-text bg-light text-muted">₹</span>
+                                    <div class="input-group input-group-sm" style="max-width: 110px;">
+                                        <span class="input-group-text">₹</span>
                                         <input type="number" class="form-control" id="recBudgetInput" min="0" step="250" value="1500">
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Custom Free-Text Routine / Interests -->
+                        <!-- Custom Free-Text Activities & Preferences -->
                         <div class="mb-3">
                             <label class="form-label small text-muted">Specific Preferences & Custom Activities</label>
-                            <input type="text" id="recCustomInterests" class="form-control" placeholder="e.g., Early morning gym, standup comedy shows, live concerts, midnight cafes">
+                            <input type="text" id="recCustomInterests" class="form-control" placeholder="e.g., Gym / workouts, standup comedy shows, live concerts, midnight cafes">
                         </div>
 
-                        <!-- Interest Category Checkboxes -->
                         <div class="mb-3">
                             <label class="form-label small text-muted d-block">Categories</label>
                             <div class="d-flex flex-wrap gap-3">
-                                <div class="form-check">
-                                    <input class="form-check-input rec-interest" type="checkbox" value="History" id="cbHistory" checked>
-                                    <label class="form-check-label small" for="cbHistory">Heritage</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input rec-interest" type="checkbox" value="Food" id="cbFood" checked>
-                                    <label class="form-check-label small" for="cbFood">Food & Cafes</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input rec-interest" type="checkbox" value="Nature" id="cbNature">
-                                    <label class="form-check-label small" for="cbNature">Nature & Outdoors</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input rec-interest" type="checkbox" value="Shopping" id="cbShop">
-                                    <label class="form-check-label small" for="cbShop">Shopping & Bazaars</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input rec-interest" type="checkbox" value="Nightlife & Entertainment" id="cbEvents">
-                                    <label class="form-check-label small" for="cbEvents">Shows & Live Events</label>
-                                </div>
+                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="History" id="cbHistory" checked><label class="form-check-label small" for="cbHistory">Heritage</label></div>
+                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Food" id="cbFood" checked><label class="form-check-label small" for="cbFood">Food & Cafes</label></div>
+                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Nature" id="cbNature"><label class="form-check-label small" for="cbNature">Nature</label></div>
+                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Shopping" id="cbShop"><label class="form-check-label small" for="cbShop">Shopping</label></div>
+                                <div class="form-check"><input class="form-check-input rec-interest" type="checkbox" value="Nightlife & Entertainment" id="cbEvents"><label class="form-check-label small" for="cbEvents">Shows & Events</label></div>
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary">Find Places</button>
@@ -338,20 +151,17 @@
             </div>
 
             <!-- ========================================================= -->
-            <!-- SECTION 3: ITINERARY PLANNER & TRIP CART SYNC             -->
+            <!-- 3. ITINERARY BUILDER                                      -->
             <!-- ========================================================= -->
-            <div class="tab-pane fade" id="itin-pane" role="tabpanel" aria-labelledby="itin-tab">
+            <div class="tab-pane fade" id="itin-pane" role="tabpanel">
                 <div class="card p-4 mb-4">
-                    <div class="mb-3">
-                        <h6 class="fw-semibold text-dark m-0">Itinerary Planner</h6>
-                        <small class="text-muted">Generate day-by-day scheduled timelines integrated with meal recommendations and user discovery spots.</small>
-                    </div>
+                    <h6 class="fw-semibold text-dark mb-3">Generate Custom Itinerary with Food Plan</h6>
                     <form id="itineraryForm">
                         
-                        <!-- Pinned Places in Trip Cart Tray -->
+                        <!-- Pinned Places in Cart Tray -->
                         <div id="cartTrayContainer" class="p-3 mb-3 bg-light rounded border d-none">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="small fw-semibold text-dark"><i class="bi bi-pin-map text-primary me-1"></i>Places pinned from discovery:</span>
+                                <span class="small fw-semibold text-dark"><i class="bi bi-cart3 text-primary me-1"></i>Selected Spots in Your Trip Cart:</span>
                                 <button type="button" id="clearCartBtn" class="btn btn-link btn-sm text-danger p-0 text-decoration-none small">Clear All</button>
                             </div>
                             <div id="cartBadges" class="d-flex flex-wrap gap-2"></div>
@@ -369,12 +179,12 @@
                             <div class="col-md-5">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label class="form-label small text-muted m-0">Total Trip Budget</label>
-                                    <span id="budgetDisplay" class="small fw-semibold text-dark">₹5,000</span>
+                                    <span id="budgetDisplay" class="small fw-semibold text-dark">₹5,000 (Comfort)</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <input type="range" class="form-range" id="itinBudgetSlider" min="1000" max="50000" step="500" value="5000">
-                                    <div class="input-group input-group-sm" style="max-width: 115px;">
-                                        <span class="input-group-text bg-light text-muted">₹</span>
+                                    <div class="input-group input-group-sm" style="max-width: 110px;">
+                                        <span class="input-group-text">₹</span>
                                         <input type="number" class="form-control" id="itinBudgetInput" min="500" step="500" value="5000">
                                     </div>
                                 </div>
@@ -385,43 +195,40 @@
                             <div class="col-md-6">
                                 <label class="form-label small text-muted">Travel Style</label>
                                 <select id="itinStyle" class="form-select">
-                                    <option value="Solo">Solo Explorer</option>
-                                    <option value="Family">Family Leisure</option>
+                                    <option value="Solo Explorer">Solo Explorer</option>
+                                    <option value="Family Leisure">Family Leisure</option>
                                     <option value="Adventure">Fast-Paced Adventure</option>
-                                    <option value="Couples">Couple / Relaxed</option>
+                                    <option value="Couple">Couple</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small text-muted">Daily Routine / Custom Events (Optional)</label>
-                                <input type="text" id="itinCustomSchedule" class="form-control" placeholder="e.g., Include 7 AM Gym workout, 9 PM standup comedy show">
+                                <label class="form-label small text-muted">Daily Routine / Events (Optional)</label>
+                                <input type="text" id="itinCustomSchedule" class="form-control" placeholder="e.g., Include 7 AM Gym, late night concerts">
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Generate Schedule</button>
+                        <button type="submit" class="btn btn-primary">Generate Scheduled Plan & Meals</button>
                     </form>
                 </div>
                 <div id="itineraryOutput"></div>
             </div>
 
             <!-- ========================================================= -->
-            <!-- SECTION 4: VISION / MENU & SIGNBOARD OCR                  -->
+            <!-- 4. VISION / MENU OCR                                      -->
             <!-- ========================================================= -->
-            <div class="tab-pane fade" id="vision-pane" role="tabpanel" aria-labelledby="vision-tab">
+            <div class="tab-pane fade" id="vision-pane" role="tabpanel">
                 <div class="card p-4 mb-4">
-                    <div class="mb-3">
-                        <h6 class="fw-semibold text-dark m-0">Visual Analysis & OCR</h6>
-                        <small class="text-muted">Extract and translate menus, historical signboards, or landmark placards.</small>
-                    </div>
+                    <h6 class="fw-semibold text-dark mb-3">Visual Analysis & OCR</h6>
                     <form id="visionForm">
                         <div class="mb-3">
-                            <label class="form-label small text-muted">Upload Image / Photo</label>
+                            <label class="form-label small text-muted">Upload Signboard, Menu, or Landmark Image</label>
                             <input type="file" id="visionFile" class="form-control" accept="image/*" required>
                         </div>
                         <div class="mb-3 text-center" id="imagePreviewContainer" style="display: none;">
-                            <img id="imagePreview" src="" alt="Preview" class="img-thumbnail rounded border shadow-sm" style="max-height: 250px;">
+                            <img id="imagePreview" src="" alt="Preview" class="img-thumbnail rounded" style="max-height: 240px;">
                         </div>
                         <div class="row g-2 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label small text-muted">Translate Text Into</label>
+                                <label class="form-label small text-muted">Translate Extracted Text To</label>
                                 <select id="visionTargetLang" class="form-select">
                                     <option value="English" selected>English</option>
                                     <option value="Telugu">Telugu (తెలుగు)</option>
@@ -434,26 +241,23 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small text-muted">Specific Instructions (Optional)</label>
-                                <input type="text" id="visionQuery" class="form-control" placeholder="e.g., Identify vegetarian items, allergy warnings">
+                                <input type="text" id="visionQuery" class="form-control" placeholder="e.g., Identify vegetarian options or translate key text">
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Analyze & Translate Image</button>
+                        <button type="submit" class="btn btn-primary">Analyze Image</button>
                     </form>
                 </div>
                 <div id="visionOutput"></div>
             </div>
 
             <!-- ========================================================= -->
-            <!-- SECTION 5: TRAVEL TRANSLATOR & PHONETICS                  -->
+            <!-- 5. TRANSLATOR                                             -->
             <!-- ========================================================= -->
-            <div class="tab-pane fade" id="trans-pane" role="tabpanel" aria-labelledby="trans-tab">
+            <div class="tab-pane fade" id="trans-pane" role="tabpanel">
                 <div class="card p-4 mb-4">
-                    <div class="mb-3">
-                        <h6 class="fw-semibold text-dark m-0">Travel Translator</h6>
-                        <small class="text-muted">Translate phrases with auto-language detection, script conversion, and spoken phonetics.</small>
-                    </div>
+                    <h6 class="fw-semibold text-dark mb-3">Travel Translator</h6>
                     
-                    <!-- Language Selection Toolbar -->
+                    <!-- Language Selection Bar -->
                     <div class="row g-2 align-items-center mb-3">
                         <div class="col-5">
                             <label class="form-label small text-muted mb-1">From</label>
@@ -495,34 +299,31 @@
 
                     <!-- Quick Travel Phrase Pills -->
                     <div class="d-flex flex-wrap gap-2 mb-3">
-                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Where is the nearest hospital or medical clinic?">🏥 Medical Help</button>
-                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="How much does this cost? Can you give me a bill?">💳 Price & Bill</button>
-                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Is this food purely vegetarian without eggs or meat?">🥗 Vegetarian Check</button>
-                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Please turn on the meter for the ride to the destination.">🚖 Taxi Meter</button>
+                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Where is the nearest hospital or medical clinic?">Medical Assistance</button>
+                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="How much does this cost? Can you give me a bill?">Price & Receipt</button>
+                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Is this food purely vegetarian without eggs or meat?">Vegetarian Check</button>
+                        <button type="button" class="suggestion-pill quick-phrase-chip" data-phrase="Please turn on the meter for the ride to the destination.">Taxi Fare</button>
                     </div>
 
                     <form id="translateForm">
                         <div class="mb-3">
                             <div class="input-group">
-                                <input type="text" id="transText" class="form-control" placeholder="Enter phrase or speak in any language..." required>
+                                <input type="text" id="transText" class="form-control" placeholder="Enter phrase to translate..." required>
                                 <button type="button" id="transMicBtn" class="btn btn-outline-secondary" title="Speech to text"><i class="bi bi-mic"></i></button>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Translate Phrase</button>
+                        <button type="submit" class="btn btn-primary">Translate</button>
                     </form>
                 </div>
                 <div id="translateOutput"></div>
             </div>
 
             <!-- ========================================================= -->
-            <!-- SECTION 6: EMERGENCY HELPLINE DIRECTORY                  -->
+            <!-- 6. EMERGENCY DIRECTORY                                    -->
             <!-- ========================================================= -->
-            <div class="tab-pane fade" id="emergency-pane" role="tabpanel" aria-labelledby="emergency-tab">
+            <div class="tab-pane fade" id="emergency-pane" role="tabpanel">
                 <div class="card p-4 mb-4">
-                    <div class="mb-3">
-                        <h6 class="fw-semibold text-dark m-0">Emergency Helplines</h6>
-                        <small class="text-muted">Quick official helpline contacts and verified safety lines by jurisdiction.</small>
-                    </div>
+                    <h6 class="fw-semibold text-dark mb-3">Emergency Helplines</h6>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label small text-muted">Country</label>
@@ -543,7 +344,7 @@
     <!-- Floating Trip Cart Bar (Sticky Dock on Places Tab) -->
     <div id="floatingCartBar" class="position-fixed bottom-0 start-50 translate-middle-x p-3 mb-3 bg-dark text-white rounded-4 shadow-lg d-none align-items-center justify-content-between gap-3" style="z-index: 1050; width: 90%; max-width: 580px;">
         <div class="d-flex align-items-center gap-2 overflow-hidden">
-            <span class="badge bg-primary rounded-pill px-2.5 py-1 fs-6" id="floatingCartCount">0</span>
+            <span class="badge bg-primary rounded-pill px-2 py-1 fs-6" id="floatingCartCount">0</span>
             <div class="text-truncate small text-white-50" id="floatingCartItems">Places selected</div>
         </div>
         <div class="d-flex gap-2">
