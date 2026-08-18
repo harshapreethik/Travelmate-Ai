@@ -1,11 +1,11 @@
 """
 TravelMate AI — Unified Gemini & Intelligence Services
 All-in-one production engine supporting:
-1. ChatGPT-like Zero-Config Multilingual Assistant (auto language/script detection & mirroring)
-2. Places & Venue Recommendation Engine (with budget sliders & custom interests)
-3. Smart Itinerary Planner (with Trip Cart sync & daily meal/food plans)
+1. Universal Conversational AI & Multilingual Assistant (auto language/script detection & natural dialogue)
+2. Places & Venue Recommendation Engine (with budget tiers & custom preferences)
+3. Smart Itinerary Planner (with Trip Cart sync & daily meal/dining logistics)
 4. Vision OCR & Visual Analysis
-5. Travel Translator & Etiquette Guide
+5. Travel Translator & Cultural Etiquette Guide
 """
 
 import json
@@ -24,8 +24,9 @@ class TravelMateService:
         if not Config.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY is missing. Check your .env file.")
         self.client = genai.Client(api_key=Config.GEMINI_API_KEY)
-        self.active_model = "gemini-2.5-flash"
+        self.active_model = getattr(Config, "GEMINI_MODEL", "gemini-2.5-flash")
         self.candidate_models = [
+            getattr(Config, "GEMINI_MODEL", "gemini-2.5-flash"),
             "gemini-2.5-flash",
             "gemini-2.0-flash",
             "gemini-1.5-flash",
@@ -33,7 +34,7 @@ class TravelMateService:
         ]
 
     # =========================================================================
-    # SECTION 1: CHATGPT-LIKE UNIVERSAL MULTILINGUAL CHAT ASSISTANT
+    # SECTION 1: DETAILED & NATURAL CONVERSATIONAL ASSISTANT
     # =========================================================================
     def generate_chat_response(
         self,
@@ -42,60 +43,56 @@ class TravelMateService:
         destination: str = "Global / Any Destination"
     ) -> str:
         """
-        Behaves like a true AI chat assistant.
-        Automatically detects ANY input language, script, dialect, or transliteration
-        (e.g., Telugu, Tanglish, Hindi, Hinglish, Tamil, Spanish, French, Japanese, etc.)
-        and responds back in that EXACT language, script, and natural conversational tone.
+        Converses naturally like an experienced local friend via live Gemini API.
+        Provides comprehensive, high-value responses with full day logistics,
+        routes, timings, and authentic food joints with Google Maps search links.
         """
         system_instruction = (
-            "You are TravelMate AI, an expert, authentic, and culturally savvy real-time multilingual travel companion.\n\n"
-            "CORE INTELLIGENCE & LANGUAGE RULES:\n"
-            "1. UNIVERSAL AUTO-DETECTION: You can understand and process EVERY human language, dialect, and script worldwide.\n"
-            "2. SCRIPT & TRANSLITERATION MIRRORING (CRITICAL):\n"
-            "   - If the user writes in Transliterated English script (e.g. Tanglish: 'hyd lo best spots cheppu', Hinglish: 'delhi me ghumne ki jagah batao', Tamglish, etc.), "
-            "     you MUST respond back in that EXACT SAME natural transliterated conversational dialect.\n"
-            "   - If the user writes in native script (e.g., తెలుగు, हिन्दी, தமிழ், 日本語, Español), respond in that exact native script.\n"
-            "   - If the user writes in English, respond in polished English.\n"
-            "3. RESPONSE QUALITY: Be direct, authentic, concise, and helpful. Provide specific place names, local food recommendations, timing tips, and cost estimates.\n"
-            "4. CLEAN FORMATTING: Use Markdown bullets and bold highlights for effortless scannability. Do NOT start with meta-announcements or generic fluff."
+            "You are TravelMate AI, an expert, authentic, and culturally knowledgeable local travel companion. "
+            "You talk like a helpful local peer who knows every hidden gem, bus number, timing, and food spot.\n\n"
+            "CRITICAL CONVERSATIONAL GUIDELINES:\n"
+            "1. THOROUGH & ACTIONABLE DETAIL:\n"
+            "   - Do NOT give 2-sentence superficial answers. Provide detailed, practical guidance with specific morning, afternoon, and evening timelines when asked for a plan.\n"
+            "   - When multi-location trips or routes are asked (e.g., Hyderabad to Amaravathi/Guntur), break down: (a) Starting point & transit routes, (b) Exact food/tiffin recommendations, (c) Bus station name, highway route, travel duration, and fare, (d) Sightseeing spots in chronological order.\n"
+            "2. LANGUAGE & SCRIPT MIRRORING:\n"
+            "   - If the user types in Transliterated English (e.g., Tanglish: 'hyderabad nunchi amt ki vellali locatioon route ivu', Hinglish, Tamglish), "
+            "     you MUST respond completely in that EXACT SAME natural transliterated conversational language (Tanglish with English letters).\n"
+            "   - If the user types in native Telugu (తెలుగు), reply in pure Telugu script.\n"
+            "   - If the user types in English, reply in polished conversational English.\n"
+            "3. REAL-WORLD NAMES & DIRECT GOOGLE MAPS LINKS (CRITICAL):\n"
+            "   - Always name exact temples, statues, forts, bakeries, tiffin centers, bus stands, and restaurants.\n"
+            "   - Whenever you mention a specific place, landmark, or eatery, embed a clickable Google Maps Markdown link using this exact format:\n"
+            "     [Place Name](https://www.google.com/maps/search/?api=1&query=URL_ENCODED_PLACE_NAME+CITY)\n"
+            "     Examples:\n"
+            "     * [Dhyana Buddha Statue](https://www.google.com/maps/search/?api=1&query=Dhyana+Buddha+Statue+Amaravathi)\n"
+            "     * [MGBS Hyderabad](https://www.google.com/maps/search/?api=1&query=Mahatma+Gandhi+Bus+Station+Hyderabad)\n"
+            "     * [Amareswara Swamy Temple](https://www.google.com/maps/search/?api=1&query=Amareswara+Swamy+Temple+Amaravathi)"
         )
 
         config = types.GenerateContentConfig(
             system_instruction=system_instruction,
-            temperature=0.4,
-            max_output_tokens=2048
+            temperature=0.7,
+            max_output_tokens=3000
         )
 
+        last_error = None
         for model in self.candidate_models:
-            for attempt in range(2):
-                try:
-                    logger.info(f"Chat request with model ({model}) [Attempt {attempt + 1}]")
-                    response = self.client.models.generate_content(
-                        model=model,
-                        contents=user_message,
-                        config=config
-                    )
-                    if response and response.text:
-                        self.active_model = model
-                        return response.text.strip()
-                except Exception as e:
-                    err = str(e)
-                    logger.warning(f"Chat model {model} attempt {attempt + 1} failed: {err}")
-                    if "503" in err or "UNAVAILABLE" in err:
-                        time.sleep(1.2)
-                        continue
-                    break
+            try:
+                response = self.client.models.generate_content(
+                    model=model,
+                    contents=user_message,
+                    config=config
+                )
+                if response and response.text:
+                    self.active_model = model
+                    return response.text.strip()
+            except Exception as e:
+                logger.error(f"Chat model {model} failed: {e}")
+                last_error = e
+                continue
 
-        return (
-            "Here are top highlights to explore:\n\n"
-            "* **Historic Core Landmarks:** Visit premier heritage spots in the early morning to beat the crowd.\n"
-            "* **Signature Culinary Trails:** Sample authentic regional specialties at established local eateries.\n"
-            "* **Evening Promenades & Bazaars:** Stroll traditional night markets for street food, crafts, and sunset views."
-        )
-
-    # Alias to prevent method naming mismatches across different routes
-    def get_chat_response(self, user_message: str, chat_history: list = None, destination: str = "Global") -> str:
-        return self.generate_chat_response(user_message=user_message, chat_history=chat_history, destination=destination)
+        # Surface exact API exception instead of silent hardcoded default
+        return f"Unable to reach the AI model ({last_error}). Please check your GEMINI_API_KEY and network connection."
 
     # =========================================================================
     # SECTION 2: PLACES & SPOT RECOMMENDATION ENGINE
@@ -108,10 +105,6 @@ class TravelMateService:
         traveller_type: str = "Solo",
         custom_interests: str = ""
     ) -> dict:
-        """
-        Curates standalone spots with ratings, costs, and match scores.
-        Takes into account custom preferences like workouts, comedy gigs, live events, or late night cafes.
-        """
         combined_interests = ", ".join(interests) if interests else "Heritage, Food, Nature"
         if custom_interests:
             combined_interests += f" | Custom Routine/Preferences: {custom_interests}"
@@ -129,7 +122,7 @@ STRICT JSON OUTPUT FORMAT ONLY (No markdown formatting tags, no intro text):
   "destination_summary": "{destination} • {traveller_type}",
   "recommendations": [
     {{
-      "name": "Exact Name of Place or Restaurant",
+      "name": "Exact Real-World Name of Place or Restaurant",
       "category": "Heritage / Food & Cafe / Nature / Fitness / Event / Shopping",
       "rating": 4.8,
       "reviews_count": "12.4k",
@@ -177,36 +170,11 @@ STRICT JSON OUTPUT FORMAT ONLY (No markdown formatting tags, no intro text):
 
         return {
             "destination_summary": f"{destination} • {traveller_type}",
-            "recommendations": [
-                {
-                    "name": f"Historic Core of {destination}",
-                    "category": "Heritage",
-                    "rating": 4.8,
-                    "reviews_count": "10.5k",
-                    "match_score": 98,
-                    "highlight": "Top iconic architectural monument and cultural landmark.",
-                    "best_time": "9:00 AM - 12:00 PM",
-                    "approx_cost": "Free / Low Entry",
-                    "duration": "2.5 hrs",
-                    "local_tip": "Arrive early morning to skip long ticket counter lines."
-                },
-                {
-                    "name": f"Authentic Culinary Bazaar in {destination}",
-                    "category": "Food & Cafe",
-                    "rating": 4.7,
-                    "reviews_count": "8.2k",
-                    "match_score": 95,
-                    "highlight": "Famous traditional street eateries and signature local dishes.",
-                    "best_time": "1:00 PM - 3:30 PM",
-                    "approx_cost": "₹200 - ₹500",
-                    "duration": "1.5 hrs",
-                    "local_tip": "Try the signature house special dish with local bread/tea."
-                }
-            ]
+            "recommendations": []
         }
 
     # =========================================================================
-    # SECTION 3: ITINERARY PLANNER (WITH TRIP CART & DAILY FOOD PLANS)
+    # SECTION 3: ITINERARY PLANNER
     # =========================================================================
     def generate_itinerary(
         self,
@@ -218,12 +186,6 @@ STRICT JSON OUTPUT FORMAT ONLY (No markdown formatting tags, no intro text):
         custom_schedule: str = "",
         **kwargs
     ) -> dict:
-        """
-        Constructs a scheduled day-by-day itinerary incorporating:
-        - Priority spots chosen by the user in Section 2 (Trip Cart)
-        - Custom schedules (e.g. 7 AM gym, 9 PM standup comedy)
-        - Explicit daily dining plans (Breakfast, Lunch, Dinner)
-        """
         extra_prompts = []
         if selected_places and len(selected_places) > 0:
             places_list_str = ", ".join(selected_places)
@@ -254,7 +216,7 @@ STRICT JSON OUTPUT FORMAT ONLY:
       "day_number": 1,
       "theme": "Day theme (e.g. Heritage Forts & Biryani Trails)",
       "morning": {{
-        "activity": "Morning Landmark or Routine",
+        "activity": "Exact Landmark or Routine",
         "description": "Exploration details, timing, or workout specifics.",
         "duration": "3 hrs"
       }},
@@ -310,42 +272,13 @@ STRICT JSON OUTPUT FORMAT ONLY:
                         continue
                     break
 
-        # Fallback schedule preserving cart spots
-        fallback_places = selected_places if (selected_places and len(selected_places) > 0) else ["City Landmark", "Heritage Walk", "Local Bazaar"]
         return {
             "destination": destination,
             "num_days": num_days,
             "budget_level": budget_level,
             "estimated_daily_budget": f"{budget_level} allocated across {num_days} days",
             "transit_summary": "Use metro and local autos for comfortable navigation.",
-            "days": [
-                {
-                    "day_number": i + 1,
-                    "theme": f"Exploring {destination} Highlights (Part {i + 1})",
-                    "morning": {
-                        "activity": fallback_places[i % len(fallback_places)],
-                        "description": "Start early to explore before peak heat and avoid long queues.",
-                        "duration": "3 hrs"
-                    },
-                    "afternoon": {
-                        "activity": "Cultural Exploration & Museum Tour",
-                        "description": "Explore regional art collections and local craft workshops.",
-                        "duration": "2.5 hrs"
-                    },
-                    "evening": {
-                        "activity": "Sunset Point & Night Market",
-                        "description": "Stroll the illuminated markets and sample local delicacies.",
-                        "duration": "3 hrs"
-                    },
-                    "dining_plan": {
-                        "breakfast": "Traditional local breakfast (e.g. Idli/Dosa, Chai & bakery snack)",
-                        "lunch": "Signature regional thali or local specialty platter",
-                        "dinner": "Authentic dinner at an established heritage restaurant"
-                    },
-                    "pro_tip": "Pre-book online tickets where possible to skip entry lines."
-                }
-                for i in range(num_days)
-            ]
+            "days": []
         }
 
     # =========================================================================
@@ -400,14 +333,14 @@ STRICT JSON OUTPUT FORMAT ONLY:
             f"You are TravelMate AI's universal smart travel translator.\n"
             f"Context / Destination: {destination}\n\n"
             f"Input Phrase: \"{phrase}\"\n\n"
-            f"TASK:\n"
+            "TASK:\n"
             f"1. Detect the input language and user intent.\n"
             f"2. Translate into '{target_lang}' if specified, or the primary local language of {destination} if 'auto'.\n"
-            f"3. Return output strictly formatted in Markdown:\n"
-            f"* **Detected Input:** [Language and Script]\n"
-            f"* **Translation:** [Translated text in native script]\n"
-            f"* **Phonetic Pronunciation:** [Pronunciation in Latin/English letters]\n"
-            f"* **Traveler Note / Etiquette:** [1 short practical tip]"
+            "3. Return output strictly formatted in Markdown:\n"
+            "* **Detected Input:** [Language and Script]\n"
+            "* **Translation:** [Translated text in native script]\n"
+            "* **Phonetic Pronunciation:** [Pronunciation in Latin/English letters]\n"
+            "* **Traveler Note / Etiquette:** [1 short practical tip]"
         )
 
         config = types.GenerateContentConfig(
@@ -441,6 +374,7 @@ def get_travelmate_service() -> TravelMateService:
     if _service_instance is None:
         _service_instance = TravelMateService()
     return _service_instance
+
 
 # Backward-compatible aliases for legacy imports
 get_gemini_service = get_travelmate_service

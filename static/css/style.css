@@ -143,3 +143,133 @@ body {
     color: var(--text-primary);
     border-color: #cbd5e1;
 }
+
+/* ================================================================= */
+/* SHADCN MINIMAL INTRO OVERLAY (SPACIOUS & CENTERED) */
+/* ================================================================= */
+.intro-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99999;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    
+    /* Smooth Entrance & Exit */
+    opacity: 0;
+    visibility: visible;
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.intro-backdrop.intro-ready {
+    opacity: 1;
+}
+
+/* Wider & More Proportionate Card */
+.intro-card {
+    max-width: 600px; /* Increased from 460px */
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #e4e4e7; /* zinc-200 */
+    border-radius: 16px;
+    padding: 3rem 2.5rem; /* Generous breathing room */
+    box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.03);
+    
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.intro-backdrop.intro-ready .intro-card {
+    transform: translateY(0) scale(1);
+}
+
+/* Typography Hierarchy */
+.intro-kicker {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #52525b; /* zinc-600 */
+    letter-spacing: -0.01em;
+}
+
+.intro-title {
+    font-size: 2.75rem; /* Large, crisp title */
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    color: #09090b; /* zinc-950 */
+    line-height: 1.1;
+}
+
+.intro-subtitle {
+    font-size: 1rem;
+    color: #71717a; /* zinc-500 */
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Feature Badges */
+.intro-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.intro-chip {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #27272a; /* zinc-800 */
+    background: #f4f4f5; /* zinc-100 */
+    border: 1px solid #e4e4e7; /* zinc-200 */
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    letter-spacing: -0.01em;
+}
+
+/* Clean Button */
+.intro-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    background: #09090b; /* zinc-950 */
+    color: #ffffff;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.intro-btn:hover {
+    background: #27272a;
+}
+
+.intro-btn:active {
+    transform: scale(0.99);
+}
+
+/* Exit Transition */
+.intro-backdrop.intro-closing {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.intro-backdrop.intro-closing .intro-card {
+    transform: translateY(10px) scale(0.98) !important;
+}

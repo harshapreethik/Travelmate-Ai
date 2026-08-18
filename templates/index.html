@@ -72,6 +72,45 @@
 </head>
 <body class="bg-white">
 
+    <!-- ================================================================= -->
+    <!-- WELCOME INTRO OVERLAY -->
+    <!-- ================================================================= -->
+    <div id="introOverlay" class="intro-backdrop" aria-modal="true" role="dialog">
+        <div class="intro-card text-center">
+            <!-- Context Subtitle -->
+            <p class="intro-kicker mb-2">
+                Welcome to our Multilingual Tourist Assistant
+            </p>
+            
+            <!-- Large Bold Project Title -->
+            <h1 class="intro-title mb-3">
+                TravelMate AI
+            </h1>
+            
+            <!-- Description -->
+            <p class="intro-subtitle mb-4">
+                An intelligent multimodal companion for real-time spot discovery, budget-aware itineraries, restaurant menu vision OCR, and dialect translation.
+            </p>
+
+            <!-- Feature Chips -->
+            <div class="intro-chips-container mb-4 pb-2">
+                <span class="intro-chip"><i class="bi bi-compass me-1"></i> Discovery & Cart</span>
+                <span class="intro-chip"><i class="bi bi-calendar-event me-1"></i> Dynamic Planner</span>
+                <span class="intro-chip"><i class="bi bi-camera me-1"></i> Menu Vision OCR</span>
+                <span class="intro-chip"><i class="bi bi-translate me-1"></i> Dialect Translator</span>
+            </div>
+
+            <!-- Action Button -->
+            <button id="enterAppBtn" class="intro-btn" onclick="dismissIntro()">
+                <span>Enter Companion</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
     <!-- Header Navigation -->
     <nav class="navbar navbar-expand-lg px-3 px-md-4 py-3 sticky-top bg-white border-bottom">
         <div class="container-fluid max-w-screen-lg mx-auto p-0" style="max-width: 900px;">
@@ -86,7 +125,7 @@
     <!-- Main Container -->
     <div class="container my-3 my-md-4" style="max-width: 900px;">
         
-        <!-- Navigation Tabs (Horizontally swipeable on mobile, full-width on desktop) -->
+        <!-- Navigation Tabs -->
         <div class="mb-4">
             <ul class="nav nav-pills nav-pills-container" id="travelTab" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -396,8 +435,33 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Single, Clean JS Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <!-- Intro Overlay Handler -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const overlay = document.getElementById('introOverlay');
+            if (overlay) {
+                requestAnimationFrame(() => {
+                    overlay.classList.add('intro-ready');
+                });
+            }
+        });
+
+        function dismissIntro() {
+            const overlay = document.getElementById('introOverlay');
+            if (!overlay) return;
+            
+            overlay.classList.remove('intro-ready');
+            overlay.classList.add('intro-closing');
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                overlay.remove();
+            }, 450);
+        }
+    </script>
 </body>
 </html>

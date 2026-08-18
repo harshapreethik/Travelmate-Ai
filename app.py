@@ -146,41 +146,30 @@ def get_recommendations_endpoint():
 def generate_itinerary_endpoint():
     try:
         data = request.get_json() or {}
+        
+        # Handle key variations from frontend (days vs num_days, budget vs budget_level)
         destination = data.get("destination", "Hyderabad")
-        num_days = int(data.get("num_days", 2))
-        budget_level = data.get("budget_level", "₹5,000")
-        traveller_type = data.get("traveller_type", "Solo Explorer")
+        raw_days = data.get("num_days") or data.get("days") or 2
+        try:
+            num_days = int(raw_days)
+        except (ValueError, TypeError):
+            num_days = 2
+
+        budget_level = data.get("budget_level") or data.get("budget") or "₹5,000"
+        traveller_type = data.get("traveller_type") or data.get("traveler_type") or "Solo Explorer"
         selected_places = data.get("selected_places", [])
         custom_schedule = data.get("custom_schedule", "")
 
         itinerary_svc = get_itinerary_service()
         
-        # Execute itinerary service safely across parameter variations
-        try:
-            result = itinerary_svc.generate_itinerary(
-                destination=destination,
-                num_days=num_days,
-                budget_level=budget_level,
-                traveller_type=traveller_type,
-                selected_places=selected_places,
-                custom_schedule=custom_schedule
-            )
-        except TypeError:
-            try:
-                result = itinerary_svc.generate_itinerary(
-                    destination=destination,
-                    num_days=num_days,
-                    budget_level=budget_level,
-                    traveller_type=traveller_type,
-                    selected_places=selected_places
-                )
-            except TypeError:
-                result = itinerary_svc.generate_itinerary(
-                    destination=destination,
-                    num_days=num_days,
-                    budget_level=budget_level,
-                    traveller_type=traveller_type
-                )
+        result = itinerary_svc.generate_itinerary(
+            destination=destination,
+            num_days=num_days,
+            budget_level=budget_level,
+            traveller_type=traveller_type,
+            selected_places=selected_places,
+            custom_schedule=custom_schedule
+        )
 
         return jsonify({"status": "success", "data": result}), 200
 

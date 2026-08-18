@@ -1,7 +1,29 @@
 /* TravelMate AI — Frontend Logic Manager */
 
+// ===================================================================
+// GLOBAL INTRO OVERLAY HANDLER
+// ===================================================================
+window.dismissIntro = function () {
+    const overlay = document.getElementById("introOverlay");
+    if (!overlay) return;
+    overlay.classList.remove("intro-ready");
+    overlay.classList.add("intro-closing");
+    setTimeout(() => {
+        overlay.style.display = "none";
+        overlay.remove();
+    }, 450);
+};
+
 document.addEventListener("DOMContentLoaded", () => {
     let tripCart = [];
+
+    // Trigger smooth intro animation on load
+    const introOverlay = document.getElementById("introOverlay");
+    if (introOverlay) {
+        requestAnimationFrame(() => {
+            introOverlay.classList.add("intro-ready");
+        });
+    }
 
     // -------------------------------------------------------------------
     // 0. CLICKABLE SUGGESTION PILLS
@@ -19,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // -------------------------------------------------------------------
-    // MARKDOWN FORMATTER
+    // MARKDOWN FORMATTER (WITH CLICKABLE MAP LINK PARSING)
     // -------------------------------------------------------------------
     function formatMarkdown(text) {
         if (!text) return "";
@@ -29,6 +51,8 @@ document.addEventListener("DOMContentLoaded", () => {
             .replace(/^### (.*$)/gm, '<h5 class="fw-bold text-primary mt-3 mb-2">$1</h5>')
             .replace(/^## (.*$)/gm, '<h4 class="fw-bold text-primary mt-4 mb-2">$1</h4>')
             .replace(/^# (.*$)/gm, '<h3 class="fw-bold text-primary mt-4 mb-3">$1</h3>')
+            // Convert [Place Name](URL) into clickable anchor tag
+            .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary text-decoration-underline fw-semibold"><i class="bi bi-geo-alt-fill text-danger me-1"></i>$1</a>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
             .replace(/^\s*[\*\-]\s+(.*)$/gm, '<li class="ms-3 mb-1">$1</li>')
@@ -42,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // -------------------------------------------------------------------
     // STREAMING / TYPEWRITER EFFECT
     // -------------------------------------------------------------------
-    function streamTextWordByWord(element, fullText, speed = 20) {
+    function streamTextWordByWord(element, fullText, speed = 15) {
         element.innerHTML = "";
         const words = fullText.split(/(\s+)/);
         let index = 0;
@@ -86,9 +110,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     body: JSON.stringify({ message: msg })
                 });
                 const data = await res.json();
-                
-                if (data.status === "success") {
-                    streamTextWordByWord(loadingBubble, data.reply, 20);
+
+                if (data.status === "success" || data.reply) {
+                    streamTextWordByWord(loadingBubble, data.reply || data.response, 15);
                 } else {
                     loadingBubble.textContent = "Error: " + (data.message || "Failed to respond.");
                 }
@@ -193,18 +217,96 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // -------------------------------------------------------------------
+    // 3. ITINERARY BUILDER (WITH AUTO-TRIGGER & GOOGLE MAPS ROUTING)
+    // -------------------------------------------------------------------
+    const budgetSlider = document.getElementById("itinBudgetSlider");
+    const budgetInput = document.getElementById("itinBudgetInput");
+    const budgetDisplay = document.getElementById("budgetDisplay");
+    const itinForm = document.getElementById("itineraryForm");
+    const itinOutput = document.getElementById("itineraryOutput");
+    const cartTrayContainer = document.getElementById("cartTrayContainer");
+    const cartBadges = document.getElementById("cartBadges");
+    const clearCartBtn = document.getElementById("clearCartBtn");
+
     if (floatingCheckoutBtn) {
         floatingCheckoutBtn.addEventListener("click", () => {
             const itinTab = document.getElementById("itin-tab");
             if (itinTab) {
-                const tabInstance = new bootstrap.Tab(itinTab);
+                const tabInstance = bootstrap.Tab.getOrCreateInstance(itinTab);
                 tabInstance.show();
             }
             if (floatingCartBar) {
                 floatingCartBar.classList.add("d-none");
                 floatingCartBar.classList.remove("d-flex");
             }
+            if (itinForm) {
+                setTimeout(() => {
+                    itinForm.dispatchEvent(new Event("submit"));
+                }, 150);
+            }
         });
+    }
+
+    function renderCartInItinerary() {
+        if (!cartTrayContainer || !cartBadges) return;
+
+        if (tripCart.length > 0) {
+            cartTrayContainer.classList.remove("d-none");
+            cartBadges.innerHTML = "";
+            tripCart.forEach(place => {
+                const badge = document.createElement("span");
+                badge.className = "badge bg-dark text-white px-2 py-1";
+                badge.innerHTML = `${place} <i class="bi bi-x-circle ms-1 cursor-pointer" data-remove="${place}"></i>`;
+                cartBadges.appendChild(badge);
+            });
+
+            cartBadges.querySelectorAll("[data-remove]").forEach(xBtn => {
+                xBtn.addEventListener("click", () => {
+                    const toRemove = xBtn.getAttribute("data-remove");
+                    tripCart = tripCart.filter(p => p !== toRemove);
+                    updateCartUI();
+                });
+            });
+        } else {
+            cartTrayContainer.classList.add("d-none");
+        }
+    }
+
+    if (clearCartBtn) {
+        clearCartBtn.addEventListener("click", () => {
+            tripCart = [];
+            updateCartUI();
+        });
+    }
+
+    function updateBudgetTier(val) {
+        let num = parseInt(val) || 0;
+        let tier = "Budget";
+
+        if (num > 15000) {
+            tier = "Luxury";
+        } else if (num >= 4000) {
+            tier = "Comfort";
+        }
+
+        if (budgetDisplay) {
+            budgetDisplay.textContent = `₹${num.toLocaleString("en-IN")} (${tier})`;
+        }
+    }
+
+    if (budgetSlider && budgetInput) {
+        budgetSlider.addEventListener("input", (e) => {
+            budgetInput.value = e.target.value;
+            updateBudgetTier(e.target.value);
+        });
+
+        budgetInput.addEventListener("input", (e) => {
+            budgetSlider.value = e.target.value;
+            updateBudgetTier(e.target.value);
+        });
+
+        updateBudgetTier(budgetSlider.value);
     }
 
     if (recForm && recOutput) {
@@ -345,86 +447,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // -------------------------------------------------------------------
-    // 3. ITINERARY BUILDER
-    // -------------------------------------------------------------------
-    const budgetSlider = document.getElementById("itinBudgetSlider");
-    const budgetInput = document.getElementById("itinBudgetInput");
-    const budgetDisplay = document.getElementById("budgetDisplay");
-    const itinForm = document.getElementById("itineraryForm");
-    const itinOutput = document.getElementById("itineraryOutput");
-    const cartTrayContainer = document.getElementById("cartTrayContainer");
-    const cartBadges = document.getElementById("cartBadges");
-    const clearCartBtn = document.getElementById("clearCartBtn");
-
-    function renderCartInItinerary() {
-        if (!cartTrayContainer || !cartBadges) return;
-
-        if (tripCart.length > 0) {
-            cartTrayContainer.classList.remove("d-none");
-            cartBadges.innerHTML = "";
-            tripCart.forEach(place => {
-                const badge = document.createElement("span");
-                badge.className = "badge bg-dark text-white px-2 py-1";
-                badge.innerHTML = `${place} <i class="bi bi-x-circle ms-1 cursor-pointer" data-remove="${place}"></i>`;
-                cartBadges.appendChild(badge);
-            });
-
-            cartBadges.querySelectorAll("[data-remove]").forEach(xBtn => {
-                xBtn.addEventListener("click", () => {
-                    const toRemove = xBtn.getAttribute("data-remove");
-                    tripCart = tripCart.filter(p => p !== toRemove);
-                    updateCartUI();
-                });
-            });
-        } else {
-            cartTrayContainer.classList.add("d-none");
-        }
-    }
-
-    if (clearCartBtn) {
-        clearCartBtn.addEventListener("click", () => {
-            tripCart = [];
-            updateCartUI();
-        });
-    }
-
-    function updateBudgetTier(val) {
-        let num = parseInt(val) || 0;
-        let tier = "Budget";
-
-        if (num > 15000) {
-            tier = "Luxury";
-        } else if (num >= 4000) {
-            tier = "Comfort";
-        }
-
-        if (budgetDisplay) {
-            budgetDisplay.textContent = `₹${num.toLocaleString("en-IN")} (${tier})`;
-        }
-    }
-
-    if (budgetSlider && budgetInput) {
-        budgetSlider.addEventListener("input", (e) => {
-            budgetInput.value = e.target.value;
-            updateBudgetTier(e.target.value);
-        });
-
-        budgetInput.addEventListener("input", (e) => {
-            budgetSlider.value = e.target.value;
-            updateBudgetTier(e.target.value);
-        });
-
-        updateBudgetTier(budgetSlider.value);
-    }
-
     if (itinForm && itinOutput) {
         itinForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             itinOutput.innerHTML = `
                 <div class="text-center p-5">
                     <div class="spinner-border text-primary" role="status"></div>
-                    <p class="mt-2 text-muted fw-semibold">Structuring daily timeline & dining schedule...</p>
+                    <p class="mt-2 text-muted fw-semibold">Structuring daily timeline, Google Maps routes & dining schedule...</p>
                 </div>
             `;
 
@@ -474,7 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     `;
 
-                    days.forEach(d => {
+                    days.forEach((d, index) => {
                         const mAct = typeof d.morning === 'object' ? (d.morning?.activity || 'Morning Sightseeing') : (d.morning || 'Morning Sightseeing');
                         const mDesc = typeof d.morning === 'object' ? (d.morning?.description || '') : '';
                         const mDur = typeof d.morning === 'object' ? (d.morning?.duration || '3 hrs') : '3 hrs';
@@ -491,23 +520,36 @@ document.addEventListener("DOMContentLoaded", () => {
                         const lunch = d.dining_plan ? (d.dining_plan.lunch || 'Regional Specialty') : 'Regional Specialty';
                         const dinner = d.dining_plan ? (d.dining_plan.dinner || 'Signature Dinner') : 'Signature Dinner';
 
+                        // Multi-stop Google Maps Route
+                        const fullRouteUrl = `https://www.google.com/maps/dir/${encodeURIComponent(mAct + ', ' + destination)}/${encodeURIComponent(aAct + ', ' + destination)}/${encodeURIComponent(eAct + ', ' + destination)}`;
+                        
+                        // Single spot Google Maps URL helper
+                        const getSingleMapUrl = (act) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(act + ', ' + destination)}`;
+
                         outputHtml += `
                             <div class="card p-4 mb-4 shadow-sm border-0 rounded-3">
-                                <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pb-2 mb-3 border-bottom">
                                     <h6 class="fw-bold text-primary m-0 fs-5">
-                                        <i class="bi bi-calendar-event me-2"></i>Day ${d.day_number || 1}: ${d.theme || 'Exploration'}
+                                        <i class="bi bi-calendar-event me-2"></i>Day ${d.day_number || (index + 1)}: ${d.theme || 'Exploration'}
                                     </h6>
-                                    <span class="badge bg-light text-secondary border">Full Day Plan</span>
+                                    <a href="${fullRouteUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary fw-semibold">
+                                        <i class="bi bi-map-fill me-1"></i>Navigate Day ${d.day_number || (index + 1)} on Google Maps
+                                    </a>
                                 </div>
 
-                                <!-- Schedule Timeline -->
+                                <!-- Schedule Timeline with Direct Google Maps Links -->
                                 <div class="timeline ps-2 mb-4">
                                     <div class="mb-3 ps-3 border-start border-3 border-warning position-relative">
                                         <div class="d-flex justify-content-between align-items-start mb-1">
                                             <strong class="text-dark"><i class="bi bi-sunrise-fill text-warning me-2"></i>Morning</strong>
                                             <span class="badge bg-light text-secondary border small">${mDur}</span>
                                         </div>
-                                        <div class="fw-semibold text-primary small">${mAct}</div>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="fw-semibold text-primary small">${mAct}</div>
+                                            <a href="${getSingleMapUrl(mAct)}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-secondary py-0 px-2 small" style="font-size: 0.72rem;">
+                                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>Google Maps
+                                            </a>
+                                        </div>
                                         <p class="text-muted small m-0">${mDesc}</p>
                                     </div>
 
@@ -516,7 +558,12 @@ document.addEventListener("DOMContentLoaded", () => {
                                             <strong class="text-dark"><i class="bi bi-sun-fill text-primary me-2"></i>Afternoon</strong>
                                             <span class="badge bg-light text-secondary border small">${aDur}</span>
                                         </div>
-                                        <div class="fw-semibold text-primary small">${aAct}</div>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="fw-semibold text-primary small">${aAct}</div>
+                                            <a href="${getSingleMapUrl(aAct)}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-secondary py-0 px-2 small" style="font-size: 0.72rem;">
+                                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>Google Maps
+                                            </a>
+                                        </div>
                                         <p class="text-muted small m-0">${aDesc}</p>
                                     </div>
 
@@ -525,7 +572,12 @@ document.addEventListener("DOMContentLoaded", () => {
                                             <strong class="text-dark"><i class="bi bi-moon-stars-fill text-info me-2"></i>Evening</strong>
                                             <span class="badge bg-light text-secondary border small">${eDur}</span>
                                         </div>
-                                        <div class="fw-semibold text-primary small">${eAct}</div>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="fw-semibold text-primary small">${eAct}</div>
+                                            <a href="${getSingleMapUrl(eAct)}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-secondary py-0 px-2 small" style="font-size: 0.72rem;">
+                                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>Google Maps
+                                            </a>
+                                        </div>
                                         <p class="text-muted small m-0">${eDesc}</p>
                                     </div>
                                 </div>
@@ -533,23 +585,23 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <!-- Dining Plan -->
                                 <div class="p-3 bg-light rounded-3 border mb-3">
                                     <h6 class="fw-bold text-dark mb-2 small text-uppercase letter-spacing-1">
-                                        <i class="bi bi-cup-hot-fill text-danger me-1"></i>Day ${d.day_number || 1} Meals & Dining
+                                        <i class="bi bi-cup-hot-fill text-danger me-1"></i>Day ${d.day_number || (index + 1)} Meals & Dining
                                     </h6>
                                     <div class="row g-2 small">
                                         <div class="col-md-4">
-                                            <div class="p-2 bg-white rounded border">
+                                            <div class="p-2 bg-white rounded border h-100">
                                                 <span class="text-muted d-block" style="font-size: 0.75rem;">BREAKFAST</span>
                                                 <strong class="text-dark">${bFast}</strong>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="p-2 bg-white rounded border">
+                                            <div class="p-2 bg-white rounded border h-100">
                                                 <span class="text-muted d-block" style="font-size: 0.75rem;">LUNCH</span>
                                                 <strong class="text-dark">${lunch}</strong>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="p-2 bg-white rounded border">
+                                            <div class="p-2 bg-white rounded border h-100">
                                                 <span class="text-muted d-block" style="font-size: 0.75rem;">DINNER / STREET FOOD</span>
                                                 <strong class="text-dark">${dinner}</strong>
                                             </div>
@@ -578,7 +630,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 4. VISION / MENU OCR HANDLER (With Target Language Pickers)
+    // 4. VISION / MENU OCR HANDLER
     // -------------------------------------------------------------------
     const visionFile = document.getElementById("visionFile");
     const imagePreviewContainer = document.getElementById("imagePreviewContainer");
@@ -641,7 +693,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 5. TRANSLATOR HANDLER (Auto-Detect, Source/Target Pickers, Swap & TTS)
+    // 5. TRANSLATOR HANDLER
     // -------------------------------------------------------------------
     const transForm = document.getElementById("translateForm");
     const transText = document.getElementById("transText");
@@ -752,13 +804,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 6. EMERGENCY DIRECTORY (Interactive Click-to-Call System)
+    // 6. EMERGENCY DIRECTORY
     // -------------------------------------------------------------------
     const emCountrySelect = document.getElementById("emCountrySelect");
     const emStateSelect = document.getElementById("emStateSelect");
     const emOutput = document.getElementById("emergencyOutput");
 
-    // Comprehensive Emergency Directory Dataset
     const EMERGENCY_DIRECTORY_DATA = {
         "India": {
             "Telangana (Hyderabad)": [
@@ -840,7 +891,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function initEmergencySystem() {
         if (!emCountrySelect || !emStateSelect || !emOutput) return;
 
-        // 1. Populate Countries
         emCountrySelect.innerHTML = "";
         Object.keys(EMERGENCY_DIRECTORY_DATA).forEach(country => {
             const opt = document.createElement("option");
@@ -850,7 +900,6 @@ document.addEventListener("DOMContentLoaded", () => {
             emCountrySelect.appendChild(opt);
         });
 
-        // 2. Populate States / Cities on Country change
         function updateStates() {
             const country = emCountrySelect.value;
             const states = EMERGENCY_DIRECTORY_DATA[country] || {};
@@ -867,7 +916,6 @@ document.addEventListener("DOMContentLoaded", () => {
             renderHelplineCards();
         }
 
-        // 3. Render Helpline Cards with Click-to-Dial Action Buttons
         function renderHelplineCards() {
             const country = emCountrySelect.value;
             const state = emStateSelect.value;
@@ -929,7 +977,6 @@ document.addEventListener("DOMContentLoaded", () => {
         emCountrySelect.addEventListener("change", updateStates);
         emStateSelect.addEventListener("change", renderHelplineCards);
 
-        // Initial trigger
         updateStates();
     }
 
