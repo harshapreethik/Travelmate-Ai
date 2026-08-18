@@ -16,6 +16,9 @@ window.dismissIntro = function () {
 
 document.addEventListener("DOMContentLoaded", () => {
     let tripCart = [];
+    
+    // In-memory conversation history (Persists until page refresh)
+    let chatSessionHistory = [];
 
     // Trigger smooth intro animation on load
     const introOverlay = document.getElementById("introOverlay");
@@ -87,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 1. CHAT ASSISTANT HANDLER
+    // 1. CHAT ASSISTANT HANDLER (MULTI-TURN MEMORY ENABLED)
     // -------------------------------------------------------------------
     const chatWindow = document.getElementById("chatWindow");
 
@@ -107,12 +110,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 const res = await fetch("/api/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: msg })
+                    body: JSON.stringify({ 
+                        message: msg,
+                        history: chatSessionHistory // Send full in-memory history
+                    })
                 });
                 const data = await res.json();
 
-                if (data.status === "success" || data.reply) {
-                    streamTextWordByWord(loadingBubble, data.reply || data.response, 15);
+                if (data.status === "success" || data.reply || data.response) {
+                    const botReply = data.reply || data.response;
+                    
+                    // Track this turn in session memory
+                    chatSessionHistory.push({ role: "user", text: msg });
+                    chatSessionHistory.push({ role: "model", text: botReply });
+
+                    streamTextWordByWord(loadingBubble, botReply, 15);
                 } else {
                     loadingBubble.textContent = "Error: " + (data.message || "Failed to respond.");
                 }
@@ -520,10 +532,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         const lunch = d.dining_plan ? (d.dining_plan.lunch || 'Regional Specialty') : 'Regional Specialty';
                         const dinner = d.dining_plan ? (d.dining_plan.dinner || 'Signature Dinner') : 'Signature Dinner';
 
-                        // Multi-stop Google Maps Route
                         const fullRouteUrl = `https://www.google.com/maps/dir/${encodeURIComponent(mAct + ', ' + destination)}/${encodeURIComponent(aAct + ', ' + destination)}/${encodeURIComponent(eAct + ', ' + destination)}`;
-                        
-                        // Single spot Google Maps URL helper
                         const getSingleMapUrl = (act) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(act + ', ' + destination)}`;
 
                         outputHtml += `
@@ -537,7 +546,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                     </a>
                                 </div>
 
-                                <!-- Schedule Timeline with Direct Google Maps Links -->
                                 <div class="timeline ps-2 mb-4">
                                     <div class="mb-3 ps-3 border-start border-3 border-warning position-relative">
                                         <div class="d-flex justify-content-between align-items-start mb-1">
@@ -582,7 +590,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                     </div>
                                 </div>
 
-                                <!-- Dining Plan -->
                                 <div class="p-3 bg-light rounded-3 border mb-3">
                                     <h6 class="fw-bold text-dark mb-2 small text-uppercase letter-spacing-1">
                                         <i class="bi bi-cup-hot-fill text-danger me-1"></i>Day ${d.day_number || (index + 1)} Meals & Dining
@@ -693,7 +700,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // -------------------------------------------------------------------
-    // 5. TRANSLATOR HANDLER
+    // 5. TRANSLATOR HANDLER (CONTINUOUS STREAMING VOICE & MANUAL SUBMIT)
     // -------------------------------------------------------------------
     const transForm = document.getElementById("translateForm");
     const transText = document.getElementById("transText");
@@ -725,21 +732,72 @@ document.addEventListener("DOMContentLoaded", () => {
     if (transMicBtn && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
+        
+        // Continuous listening for full natural sentences
+        recognition.continuous = true;
+        recognition.interimResults = true;
         recognition.lang = 'en-US';
 
+        let isListening = false;
+        let silenceTimer = null;
+        let finalTranscript = "";
+
+        function resetSilenceTimer() {
+            clearTimeout(silenceTimer);
+            // Auto-stop after 3 full seconds of total silence
+            silenceTimer = setTimeout(() => {
+                if (isListening) {
+                    recognition.stop();
+                }
+            }, 3000);
+        }
+
         transMicBtn.addEventListener("click", () => {
-            recognition.start();
-            transMicBtn.classList.add("btn-danger");
+            if (!isListening) {
+                finalTranscript = transText.value ? transText.value + " " : "";
+                try {
+                    recognition.start();
+                    isListening = true;
+                    transMicBtn.classList.add("btn-danger");
+                    transMicBtn.setAttribute("title", "Listening... Click to stop");
+                    resetSilenceTimer();
+                } catch (e) {
+                    console.warn("Recognition already active:", e);
+                }
+            } else {
+                recognition.stop();
+            }
         });
 
         recognition.onresult = (event) => {
-            transText.value = event.results[0][0].transcript;
-            transMicBtn.classList.remove("btn-danger");
-            transForm.dispatchEvent(new Event("submit"));
+            resetSilenceTimer();
+            let interimTranscript = "";
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript + " ";
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+
+            transText.value = (finalTranscript + interimTranscript).trim();
+            transText.focus();
         };
 
-        recognition.onerror = () => {
+        recognition.onerror = (event) => {
+            console.warn("Speech recognition error:", event.error);
+            clearTimeout(silenceTimer);
+            isListening = false;
             transMicBtn.classList.remove("btn-danger");
+        };
+
+        recognition.onend = () => {
+            clearTimeout(silenceTimer);
+            isListening = false;
+            transMicBtn.classList.remove("btn-danger");
+            transMicBtn.setAttribute("title", "Click to speak");
+            transText.focus();
         };
     }
 
@@ -883,7 +941,7 @@ document.addEventListener("DOMContentLoaded", () => {
             "National (Tokyo / Osaka / Kyoto)": [
                 { title: "Japan Police Emergency", number: "110", icon: "bi-shield-fill-exclamation", desc: "Immediate police dispatch" },
                 { title: "Ambulance & Fire Service", number: "119", icon: "bi-hospital", desc: "Fire fighting and emergency medical transport" },
-                { title: "Japan Japan Helpline (English)", number: "0570-000-911", icon: "bi-headset", desc: "24-hour English emergency and consultation line" }
+                { title: "Japan Helpline (English)", number: "0570-000-911", icon: "bi-headset", desc: "24-hour English emergency and consultation line" }
             ]
         }
     };

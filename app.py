@@ -48,6 +48,7 @@ def chat_endpoint():
     try:
         data = request.get_json() or {}
         user_message = data.get("message", "").strip()
+        history = data.get("history", [])
         destination = data.get("destination", "Global / Any Destination")
 
         if not user_message:
@@ -55,11 +56,31 @@ def chat_endpoint():
 
         ai_service = get_gemini_service()
         
-        # Safe execution across any method signature variations
+        # Safe execution across any method signature variations with chat history
         if hasattr(ai_service, "generate_chat_response"):
-            reply = ai_service.generate_chat_response(user_message=user_message, destination=destination)
+            try:
+                reply = ai_service.generate_chat_response(
+                    user_message=user_message,
+                    chat_history=history,
+                    destination=destination
+                )
+            except TypeError:
+                reply = ai_service.generate_chat_response(
+                    user_message=user_message,
+                    destination=destination
+                )
         elif hasattr(ai_service, "get_chat_response"):
-            reply = ai_service.get_chat_response(user_message=user_message, destination=destination)
+            try:
+                reply = ai_service.get_chat_response(
+                    user_message=user_message,
+                    chat_history=history,
+                    destination=destination
+                )
+            except TypeError:
+                reply = ai_service.get_chat_response(
+                    user_message=user_message,
+                    destination=destination
+                )
         else:
             reply = "I am ready to assist you with your travels. What destination are you exploring?"
 

@@ -19,19 +19,19 @@ from config import Config
 logger = logging.getLogger(__name__)
 
 
+# services/gemini_service.py
 class TravelMateService:
     def __init__(self):
         if not Config.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY is missing. Check your .env file.")
+        
         self.client = genai.Client(api_key=Config.GEMINI_API_KEY)
-        self.active_model = getattr(Config, "GEMINI_MODEL", "gemini-2.5-flash")
         self.candidate_models = [
-            getattr(Config, "GEMINI_MODEL", "gemini-2.5-flash"),
+            "gemini-3.5-flash-lite",
             "gemini-2.5-flash",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
-            "gemini-flash-latest"
+            "gemini-2.0-flash"
         ]
+        self.active_model = self.candidate_models[0]
 
     # =========================================================================
     # SECTION 1: DETAILED & NATURAL CONVERSATIONAL ASSISTANT
@@ -46,27 +46,26 @@ class TravelMateService:
         Converses naturally like an experienced local friend via live Gemini API.
         Provides comprehensive, high-value responses with full day logistics,
         routes, timings, and authentic food joints with Google Maps search links.
+        Maintains conversational history within the active browser session.
         """
         system_instruction = (
-            "You are TravelMate AI, an expert, authentic, and culturally knowledgeable local travel companion. "
-            "You talk like a helpful local peer who knows every hidden gem, bus number, timing, and food spot.\n\n"
-            "CRITICAL CONVERSATIONAL GUIDELINES:\n"
-            "1. THOROUGH & ACTIONABLE DETAIL:\n"
-            "   - Do NOT give 2-sentence superficial answers. Provide detailed, practical guidance with specific morning, afternoon, and evening timelines when asked for a plan.\n"
-            "   - When multi-location trips or routes are asked (e.g., Hyderabad to Amaravathi/Guntur), break down: (a) Starting point & transit routes, (b) Exact food/tiffin recommendations, (c) Bus station name, highway route, travel duration, and fare, (d) Sightseeing spots in chronological order.\n"
-            "2. LANGUAGE & SCRIPT MIRRORING:\n"
-            "   - If the user types in Transliterated English (e.g., Tanglish: 'hyderabad nunchi amt ki vellali locatioon route ivu', Hinglish, Tamglish), "
-            "     you MUST respond completely in that EXACT SAME natural transliterated conversational language (Tanglish with English letters).\n"
-            "   - If the user types in native Telugu (తెలుగు), reply in pure Telugu script.\n"
-            "   - If the user types in English, reply in polished conversational English.\n"
-            "3. REAL-WORLD NAMES & DIRECT GOOGLE MAPS LINKS (CRITICAL):\n"
-            "   - Always name exact temples, statues, forts, bakeries, tiffin centers, bus stands, and restaurants.\n"
-            "   - Whenever you mention a specific place, landmark, or eatery, embed a clickable Google Maps Markdown link using this exact format:\n"
-            "     [Place Name](https://www.google.com/maps/search/?api=1&query=URL_ENCODED_PLACE_NAME+CITY)\n"
-            "     Examples:\n"
-            "     * [Dhyana Buddha Statue](https://www.google.com/maps/search/?api=1&query=Dhyana+Buddha+Statue+Amaravathi)\n"
-            "     * [MGBS Hyderabad](https://www.google.com/maps/search/?api=1&query=Mahatma+Gandhi+Bus+Station+Hyderabad)\n"
-            "     * [Amareswara Swamy Temple](https://www.google.com/maps/search/?api=1&query=Amareswara+Swamy+Temple+Amaravathi)"
+            "You are TravelMate AI, an expert, authentic, and practical global travel companion.\n\n"
+            "STRICT CONVERSATION & TOPIC CONTINUITY RULE:\n"
+            "- Always maintain conversational context from prior messages. If the user asks a follow-up "
+            "(e.g., '3 to 4 days lo plan cheyachu ga' or 'what about food there?'), apply that constraint directly "
+            "to the active destination under discussion rather than jumping to unrelated locations.\n\n"
+            "STRICT LANGUAGE MATCHING PROTOCOL:\n"
+            "- If the user writes in standard English, respond 100% in pure English.\n"
+            "- If the user writes in Telugu script (తెలుగు), respond in Telugu script.\n"
+            "- If the user writes in transliterated Telugu / Tanglish (e.g., 'ela unnav', 'route cheppu'), respond in natural conversational Tanglish.\n"
+            "- If the user writes in Hindi / Hinglish, respond in Hindi / Hinglish.\n"
+            "- NEVER use regional slang or Telugu transliteration unless the user's latest message explicitly used it.\n\n"
+            "RESPONSE RULES & GOOGLE MAPS INTEGRATION:\n"
+            "1. Thorough & Actionable Detail: Provide structured morning, afternoon, and evening timelines with transit tips, realistic timings, and exact food recommendations.\n"
+            "2. Exact Real-World Names: Always name real landmarks, restaurants, cafes, stations, and dishes.\n"
+            "3. Clickable Google Maps Links: Every time you mention a specific attraction, restaurant, or transit hub, format it as a markdown link:\n"
+            "   [Place Name](https://www.google.com/maps/search/?api=1&query=URL_ENCODED_PLACE_NAME+CITY)\n"
+            "   Example: [Eiffel Tower](https://www.google.com/maps/search/?api=1&query=Eiffel+Tower+Paris)"
         )
 
         config = types.GenerateContentConfig(
@@ -75,12 +74,23 @@ class TravelMateService:
             max_output_tokens=3000
         )
 
+        # Build full multi-turn conversational payload
+        contents = []
+        if chat_history and isinstance(chat_history, list):
+            for msg in chat_history:
+                role = "user" if msg.get("role") in ["user", "human"] else "model"
+                text = msg.get("text") or (msg.get("parts", [{}])[0].get("text", ""))
+                if text:
+                    contents.append(types.Content(role=role, parts=[types.Part.from_text(text=text)]))
+
+        contents.append(types.Content(role="user", parts=[types.Part.from_text(text=user_message)]))
+
         last_error = None
         for model in self.candidate_models:
             try:
                 response = self.client.models.generate_content(
                     model=model,
-                    contents=user_message,
+                    contents=contents,
                     config=config
                 )
                 if response and response.text:
@@ -89,9 +99,11 @@ class TravelMateService:
             except Exception as e:
                 logger.error(f"Chat model {model} failed: {e}")
                 last_error = e
+                if any(code in str(e) for code in ["429", "503", "RESOURCE_EXHAUSTED", "UNAVAILABLE"]):
+                    time.sleep(1.0)
+                    continue
                 continue
 
-        # Surface exact API exception instead of silent hardcoded default
         return f"Unable to reach the AI model ({last_error}). Please check your GEMINI_API_KEY and network connection."
 
     # =========================================================================
@@ -163,7 +175,7 @@ STRICT JSON OUTPUT FORMAT ONLY (No markdown formatting tags, no intro text):
                             return parsed
                 except Exception as e:
                     logger.warning(f"Recommendation model {model} failed: {e}")
-                    if "503" in str(e) or "UNAVAILABLE" in str(e):
+                    if any(code in str(e) for code in ["429", "503", "RESOURCE_EXHAUSTED", "UNAVAILABLE"]):
                         time.sleep(1.2)
                         continue
                     break
@@ -267,7 +279,7 @@ STRICT JSON OUTPUT FORMAT ONLY:
                             return parsed
                 except Exception as e:
                     logger.warning(f"Itinerary model {model} failed: {e}")
-                    if "503" in str(e) or "UNAVAILABLE" in str(e):
+                    if any(code in str(e) for code in ["429", "503", "RESOURCE_EXHAUSTED", "UNAVAILABLE"]):
                         time.sleep(1.2)
                         continue
                     break
@@ -289,33 +301,50 @@ STRICT JSON OUTPUT FORMAT ONLY:
         image_bytes: bytes,
         mime_type: str = "image/jpeg",
         destination: str = "Global",
+        target_lang: str = "English",
         user_query: str = ""
     ) -> str:
-        prompt = (
-            f"You are TravelMate AI's visual intelligence engine.\n"
-            f"Context Destination: {destination}\n"
-            f"User Instructions: {user_query if user_query else 'Analyze this image in detail for a traveler.'}\n\n"
-            "TASK:\n"
-            "1. Transcribe all readable text on signs, menus, boards, or monuments.\n"
-            "2. If it is a menu, identify signature dishes, vegetarian/non-vegetarian items, dietary notes, and estimated pricing.\n"
-            "3. If it is a landmark/signboard, explain its historical significance and practical visitor advice.\n"
-            "4. Format the output cleanly in Markdown with bold titles and bullet points."
-        )
+        safe_mime = mime_type.strip() if (mime_type and mime_type.startswith("image/")) else "image/jpeg"
+        if "webp" in safe_mime:
+            safe_mime = "image/webp"
 
-        for model in self.candidate_models:
+        prompt = f"""
+You are TravelMate AI's visual intelligence and OCR engine.
+Context Destination: {destination}
+Target Language for Output: {target_lang}
+User Instructions: {user_query if user_query else 'Extract, transcribe, and translate all text, signs, dishes, and categories.'}
+
+TASK:
+1. Transcribe all readable text from the image.
+2. Translate extracted text accurately into {target_lang}.
+3. If this is a hazard/signboard, provide a prominent bold hazard explanation and safety advice.
+4. If this is a menu, categorize items into Vegetarian (🟢) and Non-Vegetarian (🔴) with pricing notes.
+5. Format the output cleanly in Markdown with bold titles and bullet points.
+"""
+
+        try:
+            image_part = types.Part.from_bytes(data=image_bytes, mime_type=safe_mime)
+        except Exception as err:
+            logger.error(f"Failed to create image Part: {err}")
+            return f"* **Error:** Could not process image ({err})."
+
+        # Vision requires multimodal models (filtering out text-only models)
+        vision_models = ["gemini-2.5-flash", "gemini-2.0-flash"]
+
+        for model in vision_models:
             try:
                 response = self.client.models.generate_content(
                     model=model,
-                    contents=[
-                        types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
-                        prompt
-                    ]
+                    contents=[image_part, prompt]
                 )
                 if response and response.text:
                     self.active_model = model
                     return response.text.strip()
             except Exception as e:
                 logger.warning(f"Vision analysis failed on {model}: {e}")
+                if any(code in str(e) for code in ["429", "503", "RESOURCE_EXHAUSTED", "UNAVAILABLE"]):
+                    time.sleep(1.0)
+                    continue
                 continue
 
         return "Unable to analyze the image at this moment. Please check the image resolution and try again."
@@ -360,6 +389,9 @@ STRICT JSON OUTPUT FORMAT ONLY:
                     return response.text.strip()
             except Exception as e:
                 logger.warning(f"Translation failed on {model}: {e}")
+                if any(code in str(e) for code in ["429", "503", "RESOURCE_EXHAUSTED", "UNAVAILABLE"]):
+                    time.sleep(0.8)
+                    continue
                 continue
 
         return "* **Translation:** Translation service is temporarily busy. Please try again."

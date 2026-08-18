@@ -5,6 +5,7 @@ Generates structured venue matrices formatted for consumer travel UI.
 
 import json
 import logging
+import random
 import re
 import time
 from google import genai
@@ -19,13 +20,14 @@ class RecommendationService:
         if not Config.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY is missing. Check your .env file.")
         self.client = genai.Client(api_key=Config.GEMINI_API_KEY)
-        self.active_model = "gemini-2.5-flash"
+        
+        # Primary high-quota model first, reliable flash models as auto-failovers
         self.candidate_models = [
+            "gemini-3.5-flash-lite",
             "gemini-2.5-flash",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
-            "gemini-flash-latest"
+            "gemini-2.0-flash"
         ]
+        self.active_model = self.candidate_models[0]
 
     def get_recommendations(
         self,
@@ -35,24 +37,38 @@ class RecommendationService:
         traveller_type: str = "Solo",
         custom_interests: str = ""
     ) -> dict:
-        combined_interests = ", ".join(interests) if interests else "Heritage, Food, Nature, Shopping"
+        dest_clean = destination.strip() if destination and destination.strip() else "Global"
+        combined_interests = ", ".join(interests) if interests else "Heritage, Food, Nature, Shopping, Nightlife"
         if custom_interests:
             combined_interests += f" | Custom Preferences: {custom_interests}"
 
-        prompt = f"""
-You are an expert travel directory database engine.
-Generate exactly 4 to 6 top spot recommendations for:
-- City/Destination: {destination}
-- Traveler Type: {traveller_type}
-- Budget Tier: {budget_level}
-- Categories & Custom Activities: {combined_interests}
+        # Dynamic variation seeds to guarantee fresh, distinct spots on repeated clicks
+        variety_seed = random.choice([
+            "iconic sights mixed with authentic local neighborhood gems",
+            "offbeat cultural spots, scenic viewpoints, and popular hangout spots",
+            "top street food joints, vibrant markets, and historic architecture",
+            "trending photo spots, local parks, and artisan boutiques"
+        ])
 
-STRICT JSON OUTPUT FORMAT ONLY (No intro text, no conversational markdown):
+        prompt = f"""
+You are a live travel directory database engine.
+Generate exactly 4 to 6 authentic, real-world, specific venue and spot recommendations located strictly in:
+Destination: {dest_clean}
+Traveler Persona: {traveller_type}
+Budget Tier: {budget_level}
+Categories & Activities: {combined_interests}
+Focus: {variety_seed}
+
+CRITICAL RULES:
+1. Every recommended place must be a REAL, SPECIFIC, and EXISTING venue/landmark in {dest_clean}.
+2. NEVER use generic templates like "Historic Core of {dest_clean}" or "Botanical Gardens in {dest_clean}".
+3. Output strictly valid JSON matching this schema:
+
 {{
-  "destination_summary": "{destination} • {traveller_type}",
+  "destination_summary": "{dest_clean} • {traveller_type}",
   "recommendations": [
     {{
-      "name": "Exact Real Place or Restaurant Name",
+      "name": "Exact Real Place Name in {dest_clean}",
       "category": "Heritage / Food & Cafe / Nature / Shopping / Event",
       "rating": 4.8,
       "reviews_count": "12.4k",
@@ -68,15 +84,16 @@ STRICT JSON OUTPUT FORMAT ONLY (No intro text, no conversational markdown):
 """
 
         config = types.GenerateContentConfig(
-            temperature=0.2,
+            temperature=0.9,
             max_output_tokens=2500,
             response_mime_type="application/json"
         )
 
+        last_error = None
         for model in self.candidate_models:
             for attempt in range(2):
                 try:
-                    logger.info(f"Fetching spots with model ({model}) [Attempt {attempt + 1}]")
+                    logger.info(f"Generating spots for '{dest_clean}' via {model} (Attempt {attempt + 1})...")
                     response = self.client.models.generate_content(
                         model=model,
                         contents=prompt,
@@ -90,68 +107,21 @@ STRICT JSON OUTPUT FORMAT ONLY (No intro text, no conversational markdown):
                         parsed = json.loads(raw.strip())
                         if "recommendations" in parsed and len(parsed["recommendations"]) > 0:
                             self.active_model = model
+                            logger.info(f"Successfully generated {len(parsed['recommendations'])} spots using {model}")
                             return parsed
                 except Exception as e:
-                    logger.warning(f"Recommendation failed on model {model}: {e}")
-                    if "503" in str(e) or "UNAVAILABLE" in str(e):
-                        time.sleep(1.0)
+                    logger.warning(f"Model {model} failed (Attempt {attempt + 1}): {e}")
+                    last_error = e
+                    # If rate limited (429) or overloaded (503), wait briefly then failover to the next candidate model
+                    if any(code in str(e) for code in ["429", "503", "RESOURCE_EXHAUSTED", "UNAVAILABLE"]):
+                        time.sleep(0.8)
                         continue
                     break
 
-        # Dynamic fallback for reliable UI rendering if API is busy
-        dest = destination if destination else "City"
+        logger.error(f"All candidate models failed for '{dest_clean}'. Last error: {last_error}")
         return {
-            "destination_summary": f"{dest} • {traveller_type}",
-            "recommendations": [
-                {
-                    "name": f"Charminar & Laad Bazaar" if "hyderabad" in dest.lower() else f"Historic Core of {dest}",
-                    "category": "Heritage",
-                    "rating": 4.7,
-                    "reviews_count": "45.6k",
-                    "match_score": 98,
-                    "highlight": "Iconic 16th-century monument surrounded by vibrant traditional bangle and spice markets.",
-                    "best_time": "9:00 AM - 11:30 AM",
-                    "approx_cost": "₹25 Entry",
-                    "duration": "2 hrs",
-                    "local_tip": "Visit early in the morning to capture clear photos and beat the afternoon rush."
-                },
-                {
-                    "name": f"Golconda Fort" if "hyderabad" in dest.lower() else f"Ancient Fortification in {dest}",
-                    "category": "Heritage",
-                    "rating": 4.6,
-                    "reviews_count": "38.2k",
-                    "match_score": 95,
-                    "highlight": "Historic citadel known for its acoustic engineering, royal palaces, and hilltop sunset views.",
-                    "best_time": "3:30 PM - 6:30 PM",
-                    "approx_cost": "₹25 Entry",
-                    "duration": "3 hrs",
-                    "local_tip": "Stay for the evening sound and light show at the main courtyard."
-                },
-                {
-                    "name": f"Nimrah Cafe and Bakery" if "hyderabad" in dest.lower() else f"Traditional Tea & Cafe Hub in {dest}",
-                    "category": "Food & Cafe",
-                    "rating": 4.5,
-                    "reviews_count": "15.8k",
-                    "match_score": 94,
-                    "highlight": "Legendary spot serving authentic Irani chai with hot Osmania biscuits right next to the monument.",
-                    "best_time": "8:00 AM - 10:00 AM",
-                    "approx_cost": "₹100",
-                    "duration": "45 mins",
-                    "local_tip": "Grab a table outside early in the morning for the best morning view."
-                },
-                {
-                    "name": f"Qutb Shahi Tombs" if "hyderabad" in dest.lower() else f"Botanical Heritage Gardens in {dest}",
-                    "category": "Heritage",
-                    "rating": 4.6,
-                    "reviews_count": "12.1k",
-                    "match_score": 91,
-                    "highlight": "Restored Persian and Hindu architectural domed tombs set within landscaped gardens.",
-                    "best_time": "10:00 AM - 1:00 PM",
-                    "approx_cost": "₹50 Entry",
-                    "duration": "2 hrs",
-                    "local_tip": "Hire an official audio guide at the entrance gate for detailed historical context."
-                }
-            ]
+            "destination_summary": f"{dest_clean} • {traveller_type}",
+            "recommendations": []
         }
 
 

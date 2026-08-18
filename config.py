@@ -17,7 +17,7 @@ class Config:
     
     # Gemini AI Configuration
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-    GEMINI_MODEL = "gemini-flash-latest"  # Stable alias for active Flash model
+    GEMINI_MODEL = "gemini-3.5-flash-lite"
     
     # Supported Multilingual Options
     DEFAULT_LANGUAGE = "en"
@@ -26,7 +26,7 @@ class Config:
         "hi": "Hindi (हिन्दी)",
         "te": "Telugu (తెలుగు)",
         "ta": "Tamil (தமிழ்)",
-        "kn": "Kannada (కన్నడ)",
+        "kn": "Kannada (ಕನ್ನಡ)",
         "ml": "Malayalam (മലയാളം)",
         "es": "Spanish (Español)",
         "fr": "French (Français)",
@@ -48,7 +48,7 @@ class Config:
             return False
             
         print("==================================================")
-        print(f"✅ Configuration loaded successfully.")
+        print("✅ Configuration loaded successfully.")
         print(f"🤖 Selected Gemini Model: {cls.GEMINI_MODEL}")
         print(f"🔑 API Key Status: Present (Length: {len(key)})")
         print("==================================================")
